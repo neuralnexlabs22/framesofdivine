@@ -89,6 +89,23 @@ function saveProducts(products: Product[]): void {
 
 export async function loadProducts(force = false): Promise<Product[]> {
   if (memoryCache && !force) return memoryCache;
+
+  // Attempt to fetch fresh products from Supabase API
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/products", { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.products) && json.products.length > 0) {
+          saveProducts(json.products);
+          return json.products;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch remote products, falling back to local:", e);
+    }
+  }
+
   memoryCache = readProducts();
   return memoryCache;
 }
@@ -111,12 +128,32 @@ export async function addProduct(product: Omit<Product, "id">): Promise<Product>
     throw new Error("Price must be a valid non-negative number");
   }
 
-  const created: Product = {
+  let created: Product = {
     ...product,
     price,
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   };
-  saveProducts([...getProductsSync(), created]);
+
+  // Persist directly to Supabase database via server API
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(created),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.product) {
+          created = json.product;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to persist product to Supabase:", e);
+    }
+  }
+
+  saveProducts([...getProductsSync().filter((p) => p.id !== created.id), created]);
   return created;
 }
 
@@ -129,6 +166,18 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
     throw new Error("Price must be a valid non-negative number");
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/products/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    } catch (e) {
+      console.warn("Failed to patch product in Supabase:", e);
+    }
+  }
+
   const updated = products.map((product) =>
     product.id === id ? { ...product, ...updates } : product
   );
@@ -136,15 +185,14 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  saveProducts(getProductsSync().filter((product) => product.id !== id));
-  try {
-    const { supabaseQuery } = await import("@/lib/supabaseDb");
-    await supabaseQuery("products", {
-      method: "DELETE",
-      query: `id=eq.${encodeURIComponent(id)}`,
-      useServiceRole: true,
-    });
-  } catch {
-    // Local storage is primary fallback, ignore DB error if table not yet created
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/products/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("Failed to delete product from Supabase:", e);
+    }
   }
+  saveProducts(getProductsSync().filter((product) => product.id !== id));
 }
