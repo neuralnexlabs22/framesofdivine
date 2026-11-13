@@ -9,7 +9,7 @@ import { useProducts } from "@/context/ProductContext";
 import { slugToProductCategory } from "@/lib/catalogHelpers";
 import { brandOptionKey } from "@/lib/catalogHelpers";
 import AdminSelect, { AdminSelectOption } from "@/components/AdminSelect";
-import { ArrowLeft, Upload, X, Loader, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Upload, X, Loader, AlertCircle, CheckCircle, Sparkles, Plus } from "lucide-react";
 import Link from "next/link";
 
 function convertGoogleDriveUrl(url: string): string {
@@ -69,9 +69,25 @@ export default function AddProductPage() {
     materials: [] as string[],
   });
 
-  const [colorInput, setColorInput] = useState("");
+  const [sizesList, setSizesList] = useState<Array<{ label: string; priceDelta: number }>>([
+    { label: "13 × 15 inches", priceDelta: 0 },
+    { label: "15 × 18 inches", priceDelta: 500 },
+    { label: "17 × 21 inches", priceDelta: 1200 },
+    { label: "20 × 24 inches", priceDelta: 2200 },
+    { label: "22 × 28 inches", priceDelta: 3400 },
+  ]);
   const [sizeInput, setSizeInput] = useState("");
+  const [sizeDeltaInput, setSizeDeltaInput] = useState("");
+
+  const [materialsList, setMaterialsList] = useState<Array<{ label: string; priceDelta: number }>>([
+    { label: "22 Carat Exclusive", priceDelta: 0 },
+    { label: "24 Carat Exclusive", priceDelta: 2000 },
+    { label: "Teak Wood Frame", priceDelta: 0 },
+  ]);
   const [materialInput, setMaterialInput] = useState("");
+  const [materialDeltaInput, setMaterialDeltaInput] = useState("");
+
+  const [colorInput, setColorInput] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>(["", "", "", "", ""]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(["", "", "", "", ""]);
 
@@ -227,12 +243,12 @@ export default function AddProductPage() {
           formData.shortDescription.trim() ||
           `${formData.name} — ${selectedBrand.name}`,
         sizes:
-          formData.sizes.length > 0
-            ? formData.sizes
+          sizesList.length > 0
+            ? sizesList
             : ["12 x 18 in", "16 x 24 in"],
         colors:
-          formData.colors.length > 0
-            ? formData.colors
+          materialsList.length > 0
+            ? materialsList
             : ["Teak Wood Frame", "Matte Gold Frame"],
         stock: parseInt(formData.stockQuantity) || 0,
         isNew: formData.featured,
@@ -621,101 +637,184 @@ export default function AddProductPage() {
           </div>
         </div>
 
-        {/* Variants & Specifications */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-serif font-bold text-white">Print Sizes & Framing Options</h3>
-
-          {/* Frames / Finishes */}
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
-              Frame / Finish Options (e.g. Matte Gold Frame, Teak Wood, Unframed Archival)
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {formData.colors.map((color) => (
-                <span
-                  key={color}
-                  className="flex items-center gap-1.5 text-xs bg-[#c9a227]/10 text-[#c9a227] border border-[#c9a227]/30 px-3 py-1.5 rounded-lg font-medium"
-                >
-                  {color}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(color, "colors")}
-                    className="hover:text-white transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+        {/* SECTION: SIZES & CUSTOM PRICING */}
+        <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="font-serif text-lg text-white font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#c9a227]" />
+                Dimensions / Sizes & Price Differences
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Set individual price additions for larger print dimensions (e.g. +₹500 for 15×18)
+              </p>
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={colorInput}
-                onChange={(e) => setColorInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag(colorInput, setColorInput, "colors");
-                  }
-                }}
-                placeholder="e.g. Teak Wood Frame, Matte Gold, Acrylic Mount"
-                className="flex-1 bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => addTag(colorInput, setColorInput, "colors")}
-                className="px-4 py-3 bg-[#c9a227] text-black rounded-lg font-bold hover:brightness-110 transition-all"
-              >
-                Add Frame
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setSizesList([
+                  { label: "13 × 15 inches", priceDelta: 0 },
+                  { label: "15 × 18 inches", priceDelta: 500 },
+                  { label: "17 × 21 inches", priceDelta: 1200 },
+                  { label: "20 × 24 inches", priceDelta: 2200 },
+                  { label: "22 × 28 inches", priceDelta: 3400 },
+                ])
+              }
+              className="text-[11px] font-bold text-[#c9a227] bg-[#c9a227]/10 hover:bg-[#c9a227]/20 border border-[#c9a227]/30 px-3 py-1.5 rounded-lg transition-all w-fit"
+            >
+              + Load Standard Tanjore Sizes
+            </button>
           </div>
 
-          {/* Print Dimensions */}
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
-              Available Dimensions / Sizes (e.g. 12x18 in, 16x24 in, 20x30 in)
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {formData.sizes.map((size) => (
+          {/* Existing Sizes Chips */}
+          <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-black/40 rounded-xl border border-white/5">
+            {sizesList.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-1">No custom sizes configured. Add one below.</span>
+            ) : (
+              sizesList.map((s) => (
                 <span
-                  key={size}
-                  className="flex items-center gap-1.5 text-xs bg-[#c9a227]/10 text-white border border-[#c9a227]/30 px-3 py-1.5 rounded-lg font-medium"
+                  key={s.label}
+                  className="flex items-center gap-2 text-xs bg-black border border-[#c9a227]/40 text-white px-3 py-2 rounded-lg"
                 >
-                  {size}
+                  <span className="font-semibold">{s.label}</span>
+                  <span className="text-[#e8c75d] font-bold">
+                    {s.priceDelta > 0 ? `+₹${s.priceDelta.toLocaleString("en-IN")}` : "+₹0"}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => removeTag(size, "sizes")}
-                    className="hover:text-red-400 transition-colors"
+                    onClick={() => setSizesList(sizesList.filter((item) => item.label !== s.label))}
+                    className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag(sizeInput, setSizeInput, "sizes");
-                  }
-                }}
-                placeholder="e.g. 12 x 18 in, 16 x 24 in, 24 x 36 in"
-                className="flex-1 bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => addTag(sizeInput, setSizeInput, "sizes")}
-                className="px-4 py-3 bg-[#c9a227] text-black rounded-lg font-bold hover:brightness-110 transition-all"
-              >
-                Add Size
-              </button>
-            </div>
+              ))
+            )}
           </div>
+
+          {/* Add Size Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_auto] gap-2 pt-1">
+            <input
+              type="text"
+              value={sizeInput}
+              onChange={(e) => setSizeInput(e.target.value)}
+              placeholder="Dimension (e.g. 15 × 18 inches)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <input
+              type="number"
+              value={sizeDeltaInput}
+              onChange={(e) => setSizeDeltaInput(e.target.value)}
+              placeholder="Extra Price ₹ (e.g. 500)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const label = sizeInput.trim();
+                if (!label) return;
+                const delta = Number(sizeDeltaInput.trim().replace(/[^\d.]/g, "")) || 0;
+                if (!sizesList.some((s) => s.label.toLowerCase() === label.toLowerCase())) {
+                  setSizesList([...sizesList, { label, priceDelta: delta }]);
+                }
+                setSizeInput("");
+                setSizeDeltaInput("");
+              }}
+              className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Add Size
+            </button>
+          </div>
+        </div>
+
+        {/* SECTION: MATERIALS / FRAMING & CUSTOM PRICING */}
+        <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="font-serif text-lg text-white font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#c9a227]" />
+                Materials, Gold & Framing Options
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Set price additions for 24KT Gold leaf, Teak framing, or premium finishes
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setMaterialsList([
+                  { label: "22 Carat Exclusive", priceDelta: 0 },
+                  { label: "24 Carat Exclusive", priceDelta: 2000 },
+                  { label: "Teak Wood Frame", priceDelta: 0 },
+                  { label: "Antique Gold Carved Frame", priceDelta: 1500 },
+                ])
+              }
+              className="text-[11px] font-bold text-[#c9a227] bg-[#c9a227]/10 hover:bg-[#c9a227]/20 border border-[#c9a227]/30 px-3 py-1.5 rounded-lg transition-all w-fit"
+            >
+              + Load Standard Gold & Framing
+            </button>
+          </div>
+
+          {/* Existing Materials Chips */}
+          <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-black/40 rounded-xl border border-white/5">
+            {materialsList.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-1">No framing options configured. Add one below.</span>
+            ) : (
+              materialsList.map((m) => (
+                <span
+                  key={m.label}
+                  className="flex items-center gap-2 text-xs bg-black border border-[#c9a227]/40 text-white px-3 py-2 rounded-lg"
+                >
+                  <span className="font-semibold">{m.label}</span>
+                  <span className="text-[#e8c75d] font-bold">
+                    {m.priceDelta > 0 ? `+₹${m.priceDelta.toLocaleString("en-IN")}` : "+₹0"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setMaterialsList(materialsList.filter((item) => item.label !== m.label))}
+                    className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          {/* Add Material Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_auto] gap-2 pt-1">
+            <input
+              type="text"
+              value={materialInput}
+              onChange={(e) => setMaterialInput(e.target.value)}
+              placeholder="Material / Finish (e.g. 24 Carat Exclusive)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <input
+              type="number"
+              value={materialDeltaInput}
+              onChange={(e) => setMaterialDeltaInput(e.target.value)}
+              placeholder="Extra Price ₹ (e.g. 2000)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const label = materialInput.trim();
+                if (!label) return;
+                const delta = Number(materialDeltaInput.trim().replace(/[^\d.]/g, "")) || 0;
+                if (!materialsList.some((m) => m.label.toLowerCase() === label.toLowerCase())) {
+                  setMaterialsList([...materialsList, { label, priceDelta: delta }]);
+                }
+                setMaterialInput("");
+                setMaterialDeltaInput("");
+              }}
+              className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Add Material
+            </button>
+          </div>
+        </div>
 
           {/* Paper & Medium */}
           <div className="space-y-2">
@@ -762,7 +861,6 @@ export default function AddProductPage() {
               </button>
             </div>
           </div>
-        </div>
 
         {/* Status */}
         <div className="space-y-4">

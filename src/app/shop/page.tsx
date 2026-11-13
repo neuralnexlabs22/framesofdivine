@@ -74,7 +74,7 @@ export default async function ShopPage() {
               >
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <Image
-                    src={category.image}
+                    src={category.image || devotionalAssets.deityMontage.src}
                     alt={category.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"

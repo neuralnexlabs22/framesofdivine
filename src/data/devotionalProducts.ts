@@ -1,5 +1,10 @@
 import { artworks, deities, devotionalAssets } from "@/data/devotional";
 
+export type ProductOptionVariant = {
+  label: string;
+  priceDelta: number;
+};
+
 export type DevotionalProduct = {
   id: string;
   slug: string;
@@ -13,6 +18,9 @@ export type DevotionalProduct = {
   cropPosition?: string;
   badge: string;
   size: string;
+  sizes?: Array<ProductOptionVariant | string>;
+  colors?: Array<ProductOptionVariant | string>;
+  materials?: Array<ProductOptionVariant | string>;
 };
 
 export const devotionalCategories = [

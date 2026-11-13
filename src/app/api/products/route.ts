@@ -3,6 +3,16 @@ import { supabaseQuery } from "@/lib/supabaseDb";
 import { products as defaultProducts } from "@/data/products";
 
 function mapDbToProduct(row: any) {
+  let cat = row.category_id || row.category || "Deity Paintings";
+  let desc = row.description || "";
+  if (desc) {
+    const match = desc.match(/<!--category:(.*?)-->/);
+    if (match) {
+      cat = match[1];
+      desc = desc.replace(/<!--category:.*?-->\s*/, "");
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -10,9 +20,9 @@ function mapDbToProduct(row: any) {
     brand: row.brand || "Frames of Divine",
     price: Number(row.price),
     originalPrice: row.original_price ? Number(row.original_price) : undefined,
-    category: row.category,
+    category: cat,
     images: Array.isArray(row.images) ? row.images : [],
-    description: row.description || "",
+    description: desc,
     stock: row.stock ?? 10,
     colors: Array.isArray(row.colors) ? row.colors : [],
     sizes: Array.isArray(row.sizes) ? row.sizes : [],
@@ -154,8 +164,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (typeof error === "string" && error.includes("products_category_check")) {
-        console.warn("Retrying insert with Deity Paintings category fallback due to check constraint...");
-        const retryPayload = { ...dbPayload, category: "Deity Paintings" };
+        console.warn("Retrying insert with Deity Paintings category fallback and embedded category tag...");
+        const retryPayload = {
+          ...dbPayload,
+          category: "Deity Paintings",
+          description: `<!--category:${category}-->\n${dbPayload.description || ""}`,
+        };
         const retryRes = await supabaseQuery<any[]>("products", {
           method: "POST",
           body: retryPayload,

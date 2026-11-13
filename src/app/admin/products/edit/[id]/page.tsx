@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent, FormEvent, use } from "react";
+import { useState, useEffect, useRef, FormEvent, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, X, Save, AlertCircle, Loader, Upload, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, X, Save, AlertCircle, Loader, Upload, Plus, Trash2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useProducts } from "@/context/ProductContext";
@@ -16,30 +16,57 @@ import {
 } from "@/lib/catalogHelpers";
 import AdminSelect, { AdminSelectOption } from "@/components/AdminSelect";
 
+type VariantOption = {
+  label: string;
+  priceDelta: number;
+};
+
+const STANDARD_DEVOTIONAL_SIZES: VariantOption[] = [
+  { label: "13 × 15 inches", priceDelta: 0 },
+  { label: "15 × 18 inches", priceDelta: 500 },
+  { label: "17 × 21 inches", priceDelta: 1200 },
+  { label: "20 × 24 inches", priceDelta: 2200 },
+  { label: "22 × 28 inches", priceDelta: 3400 },
+];
+
+const STANDARD_DEVOTIONAL_MATERIALS: VariantOption[] = [
+  { label: "22 Carat Exclusive", priceDelta: 0 },
+  { label: "24 Carat Exclusive", priceDelta: 2000 },
+  { label: "Teak Wood Frame", priceDelta: 0 },
+  { label: "Antique Gold Carved Frame", priceDelta: 1500 },
+];
+
+function parseVariant(item: any): VariantOption {
+  if (!item) return { label: "", priceDelta: 0 };
+  if (typeof item === "object" && item.label) {
+    return {
+      label: String(item.label).trim(),
+      priceDelta: Number(item.priceDelta) || 0,
+    };
+  }
+  const str = String(item).trim();
+  const deltaMatch = str.match(/\(\s*\+\s*(?:₹|Rs\.?)?\s*(\d+)\s*\)/i);
+  if (deltaMatch) {
+    return {
+      label: str.replace(/\(\s*\+\s*(?:₹|Rs\.?)?\s*\d+\s*\)/i, "").trim(),
+      priceDelta: Number(deltaMatch[1]) || 0,
+    };
+  }
+  return { label: str, priceDelta: 0 };
+}
+
 function convertGoogleDriveUrl(url: string): string {
   const trimmed = url.trim();
-  
-  // Pattern 1: drive.google.com/file/d/FILE_ID/...
   const fileDRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
   const match1 = trimmed.match(fileDRegex);
   if (match1 && match1[1]) {
     return `https://docs.google.com/uc?export=view&id=${match1[1]}`;
   }
-
-  // Pattern 2: drive.google.com/open?id=FILE_ID or docs.google.com/open?id=FILE_ID
   const openIdRegex = /[drive|docs]\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/;
   const match2 = trimmed.match(openIdRegex);
   if (match2 && match2[1]) {
     return `https://docs.google.com/uc?export=view&id=${match2[1]}`;
   }
-
-  // Pattern 3: docs.google.com/file/d/FILE_ID/...
-  const docsDRegex = /docs\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-  const match3 = trimmed.match(docsDRegex);
-  if (match3 && match3[1]) {
-    return `https://docs.google.com/uc?export=view&id=${match3[1]}`;
-  }
-
   return trimmed;
 }
 
@@ -51,7 +78,7 @@ export default function EditProductPage({
   const { id } = use(params);
   const router = useRouter();
   const { getProductById, updateProduct, deleteProduct, loaded: productsLoaded } = useProducts();
-  const { brands: catalogBrands, loading: catalogLoading } = useCatalog();
+  const { categories: catalogCategories, brands: catalogBrands, loading: catalogLoading } = useCatalog();
 
   const [loaded, setLoaded] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -65,18 +92,46 @@ export default function EditProductPage({
   const [isCustomBrand, setIsCustomBrand] = useState(false);
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [category, setCategory] = useState<any>("Deity Prints");
+  const [category, setCategory] = useState<string>("Deity Paintings");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([""]);
-  const [colors, setColors] = useState<string[]>([]);
-  const [colorInput, setColorInput] = useState("");
-  const [sizes, setSizes] = useState<string[]>([]);
+
+  // Variants with price differences
+  const [sizes, setSizes] = useState<VariantOption[]>([]);
   const [sizeInput, setSizeInput] = useState("");
+  const [sizeDeltaInput, setSizeDeltaInput] = useState("");
+
+  const [materials, setMaterials] = useState<VariantOption[]>([]);
+  const [materialInput, setMaterialInput] = useState("");
+  const [materialDeltaInput, setMaterialDeltaInput] = useState("");
+
   const [isNew, setIsNew] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
   const [message, setMessage] = useState<null | { type: "error" | "success"; text: string }>(null);
   const initialLoadDone = useRef(false);
+
+  // Combine static presets with all dynamic categories from Supabase
+  const availableCategories = useMemo(() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+
+    const addCat = (catName?: string) => {
+      if (!catName) return;
+      const clean = catName.trim();
+      const lower = clean.toLowerCase();
+      if (clean && !seen.has(lower)) {
+        seen.add(lower);
+        list.push(clean);
+      }
+    };
+
+    PRODUCT_CATEGORIES.forEach(addCat);
+    catalogCategories.forEach((c) => addCat(c.name));
+    if (category) addCat(category);
+
+    return list;
+  }, [catalogCategories, category]);
 
   useEffect(() => {
     if (!productsLoaded || catalogLoading) return;
@@ -107,12 +162,25 @@ export default function EditProductPage({
     setPrice(String(product.price));
     setStock(String(product.stock ?? 10));
     setCategory(product.category);
-    setDescription(product.description);
-    setImages(product.images.length > 0 ? [...product.images] : [""]);
-    setColors([...product.colors]);
-    setSizes([...product.sizes]);
-    setIsNew(product.isNew);
-    setIsTrending(product.isTrending || false);
+    setDescription(product.description || "");
+    setImages(product.images && product.images.length > 0 ? [...product.images] : [""]);
+
+    // Parse existing sizes and materials
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      setSizes(product.sizes.map(parseVariant).filter((v) => Boolean(v.label)));
+    } else {
+      setSizes(STANDARD_DEVOTIONAL_SIZES);
+    }
+
+    const rawMaterials = (product as any).materials || product.colors;
+    if (Array.isArray(rawMaterials) && rawMaterials.length > 0) {
+      setMaterials(rawMaterials.map(parseVariant).filter((v) => Boolean(v.label)));
+    } else {
+      setMaterials(STANDARD_DEVOTIONAL_MATERIALS);
+    }
+
+    setIsNew(Boolean(product.isNew));
+    setIsTrending(Boolean(product.isTrending));
     setLoaded(true);
     initialLoadDone.current = true;
   }, [id, getProductById, catalogBrands, productsLoaded, catalogLoading]);
@@ -156,79 +224,48 @@ export default function EditProductPage({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.classList.add("border-[var(--accent-1)]", "bg-white/5");
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove("border-[var(--accent-1)]", "bg-white/5");
-  };
-
-  const handleDrop = async (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove("border-[var(--accent-1)]", "bg-white/5");
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith("image/")) {
-        await handleImageUpload(index, file);
-      } else {
-        alert("Please drop an image file.");
-      }
-      return;
-    }
-
-    const url = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
-    if (url) {
-      updateImage(index, url);
-    }
-  };
-
   const removeImage = (index: number) => {
     if (images.length > 1) {
       setImages(images.filter((_, i) => i !== index));
     }
   };
 
-  const handleColorKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const val = colorInput.trim();
-      if (val && !colors.includes(val)) {
-        setColors([...colors, val]);
-      }
-      setColorInput("");
+  // Add / Remove Sizes
+  const handleAddSize = () => {
+    const label = sizeInput.trim();
+    if (!label) return;
+    const delta = Number(sizeDeltaInput.trim().replace(/[^\d.]/g, "")) || 0;
+    if (!sizes.some((s) => s.label.toLowerCase() === label.toLowerCase())) {
+      setSizes([...sizes, { label, priceDelta: delta }]);
     }
+    setSizeInput("");
+    setSizeDeltaInput("");
   };
 
-  const removeColor = (color: string) => {
-    setColors(colors.filter((c) => c !== color));
+  const handleRemoveSize = (label: string) => {
+    setSizes(sizes.filter((s) => s.label !== label));
   };
 
-  const handleSizeKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const val = sizeInput.trim();
-      if (val && !sizes.includes(val)) {
-        setSizes([...sizes, val]);
-      }
-      setSizeInput("");
+  // Add / Remove Materials
+  const handleAddMaterial = () => {
+    const label = materialInput.trim();
+    if (!label) return;
+    const delta = Number(materialDeltaInput.trim().replace(/[^\d.]/g, "")) || 0;
+    if (!materials.some((m) => m.label.toLowerCase() === label.toLowerCase())) {
+      setMaterials([...materials, { label, priceDelta: delta }]);
     }
+    setMaterialInput("");
+    setMaterialDeltaInput("");
   };
 
-  const removeSize = (size: string) => {
-    setSizes(sizes.filter((s) => s !== size));
+  const handleRemoveMaterial = (label: string) => {
+    setMaterials(materials.filter((m) => m.label !== label));
   };
 
   const normalizePrice = (value: string) => {
     const cleaned = value.trim().replace(/[^\d.]/g, "");
     const parsed = Number(cleaned);
-    // Preserve exact value without rounding
-    const result = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-    console.log("normalizePrice - input:", value, "cleaned:", cleaned, "parsed:", parsed, "result:", result);
-    return result;
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   };
 
   const handleDelete = async () => {
@@ -276,7 +313,7 @@ export default function EditProductPage({
         images: validImages,
         description: description.trim(),
         sizes,
-        colors,
+        colors: materials,
         isNew,
         isTrending,
       });
@@ -305,7 +342,7 @@ export default function EditProductPage({
         <p className="text-sm mb-4">Product not found</p>
         <Link
           href="/admin/products"
-          className="text-[var(--accent-1)] text-sm hover:underline"
+          className="text-[#c9a227] text-sm hover:underline"
         >
           Back to Products
         </Link>
@@ -313,12 +350,14 @@ export default function EditProductPage({
     );
   }
 
+  const basePriceNum = normalizePrice(price);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="max-w-3xl mx-auto space-y-6"
+      className="max-w-3xl mx-auto space-y-6 pb-20"
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
@@ -336,23 +375,86 @@ export default function EditProductPage({
             <h1 className="text-2xl md:text-3xl font-serif font-medium uppercase tracking-tight text-white mt-0.5">
               Edit Devotional Print
             </h1>
-            <p className="text-zinc-400 text-sm mt-0.5">
-              Update deity print details, pricing, dimensions, and framing options
+            <p className="text-zinc-400 text-xs mt-0.5">
+              Update deity print details, category, custom size pricing, and framing
             </p>
           </div>
         </div>
+
+        {/* Delete Artwork Trigger */}
         <button
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all flex-shrink-0"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 transition-all text-xs font-semibold"
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Delete Artwork</span>
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Delete Artwork</span>
         </button>
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-zinc-950 border border-red-500/40 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl"
+          >
+            <div className="flex items-center gap-3 text-red-400">
+              <AlertCircle className="w-6 h-6" />
+              <h3 className="font-serif text-lg font-bold text-white">Delete Devotional Print?</h3>
+            </div>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              Are you sure you want to delete <span className="font-semibold text-white">"{name}"</span>? This will permanently remove this artwork from the shop catalog and database.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-xl border border-white/20 text-xs uppercase tracking-wider font-semibold text-zinc-300 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs uppercase tracking-wider font-bold transition-all disabled:opacity-50"
+              >
+                {deleting ? (
+                  <>
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Permanently</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Feedback Message */}
+      {message && (
+        <div
+          className={`p-4 rounded-xl text-sm flex items-center gap-2 ${
+            message.type === "error"
+              ? "bg-red-500/10 border border-red-500/20 text-red-400"
+              : "bg-[#c9a227]/10 border border-[#c9a227]/30 text-[#e8c75d]"
+          }`}
+        >
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{message.text}</span>
+        </div>
+      )}
+
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name */}
         <div className="space-y-2">
           <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
@@ -363,107 +465,102 @@ export default function EditProductPage({
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="e.g. Lord Shiva Nataraja Devotional Print"
+            placeholder="e.g. Lord Shiva Nataraja Devotional Painting"
             className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
           />
         </div>
 
-        {/* Brand + Price row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Brand / Theme & Base Price */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
               Deity / Sacred Theme
             </label>
-            <div className="space-y-2">
-              <AdminSelect
-                value={isCustomBrand ? "Custom" : brand}
-                onChange={(e) => {
-                  if (e.target.value === "Custom") {
-                    setIsCustomBrand(true);
-                  } else {
-                    setIsCustomBrand(false);
-                    setBrand(e.target.value);
-                  }
-                }}
-              >
-                {brandsForCategory.map((b) => (
-                  <AdminSelectOption
-                    key={brandOptionKey(b)}
-                    optionKey={brandOptionKey(b)}
-                    value={b.name}
-                  >
-                    {b.name}
-                  </AdminSelectOption>
-                ))}
-                <AdminSelectOption optionKey="brand-custom" value="Custom">
-                  Custom / Other Brand...
+            <AdminSelect
+              value={isCustomBrand ? "__custom__" : brand}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "__custom__") {
+                  setIsCustomBrand(true);
+                } else {
+                  setIsCustomBrand(false);
+                  setBrand(val);
+                }
+              }}
+            >
+              {brandsForCategory.map((b) => (
+                <AdminSelectOption key={brandOptionKey(b)} optionKey={brandOptionKey(b)} value={b.name}>
+                  {b.name}
                 </AdminSelectOption>
-              </AdminSelect>
-
-              {isCustomBrand && (
-                <input
-                  type="text"
-                  value={customBrand}
-                  onChange={(e) => setCustomBrand(e.target.value)}
-                  placeholder="Type custom brand name"
-                  required
-                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors"
-                />
-              )}
-            </div>
+              ))}
+              <AdminSelectOption optionKey="custom-brand" value="__custom__">
+                Custom / Other Theme...
+              </AdminSelectOption>
+            </AdminSelect>
+            {isCustomBrand && (
+              <input
+                type="text"
+                value={customBrand}
+                onChange={(e) => setCustomBrand(e.target.value)}
+                placeholder="Enter deity or sacred theme name"
+                className="w-full mt-2 bg-black border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none text-sm transition-colors"
+              />
+            )}
           </div>
+
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
-              Price (₹) *
+            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+              Base Price (₹) *
             </label>
             <input
-              type="number"
+              type="text"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
-              min="0"
-              step="1"
-              placeholder="1799"
-              className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
-              Global Stock *
-            </label>
-            <input
-              type="number"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              required
-              min="0"
-              step="1"
-              placeholder="10"
-              className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors"
+              placeholder="e.g. 999"
+              className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
             />
           </div>
         </div>
 
-        {/* Category */}
+        {/* Global Stock */}
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
-            Category *
+          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+            Global Stock *
           </label>
+          <input
+            type="number"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            min="0"
+            step="1"
+            placeholder="10"
+            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
+          />
+        </div>
+
+        {/* Category (DYNAMIC DROPDOWN INCLUDING CUSTOM CATEGORIES) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+              Category *
+            </label>
+            <span className="text-[10px] text-[#c9a227] uppercase tracking-wider font-semibold">
+              {availableCategories.length} categories available
+            </span>
+          </div>
           <AdminSelect
             value={category}
             onChange={(e) => {
-              const next = e.target.value as typeof category;
+              const next = e.target.value;
               setCategory(next);
               if (initialLoadDone.current && !isCustomBrand) {
-                const list = getBrandsForProductCategory(
-                  next,
-                  catalogBrands
-                );
+                const list = getBrandsForProductCategory(next, catalogBrands);
                 if (list.length > 0) setBrand(list[0].name);
               }
             }}
           >
-            {PRODUCT_CATEGORIES.map((cat) => (
+            {availableCategories.map((cat) => (
               <AdminSelectOption key={`cat-${cat}`} optionKey={`cat-${cat}`} value={cat}>
                 {cat}
               </AdminSelectOption>
@@ -473,22 +570,22 @@ export default function EditProductPage({
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
+          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
             Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            placeholder="Product description..."
-            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors resize-none"
+            placeholder="Devotional print description, symbolism, blessings, framing craftsmanship..."
+            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors resize-none"
           />
         </div>
 
-        {/* Images */}
+        {/* Product Images */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
+            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
               Product Images (up to 5)
             </label>
             {images.length < 5 && (
@@ -498,77 +595,54 @@ export default function EditProductPage({
                 className="flex items-center gap-1.5 text-xs text-[#c9a227] bg-[#c9a227]/10 px-3 py-1.5 rounded-lg hover:bg-[#c9a227]/20 transition-all font-bold"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add Image Slot
+                <span>Add Image Slot</span>
               </button>
             )}
           </div>
-          <p className="text-xs text-zinc-400 mt-1">Drag & drop files or paste URLs (Main image is the first slot)</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+
+          <div className="space-y-4">
             {images.map((img, index) => (
-              <div key={index} className="space-y-2 p-4 rounded-xl border border-white/5 bg-zinc-900/40">
+              <div key={index} className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider">
-                    {index === 0 ? "Main Image" : `Image ${index + 1}`}
-                    {index < 2 && <span className="text-[var(--accent-1)] ml-1">*</span>}
-                  </div>
+                  <span className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">
+                    {index === 0 ? "★ Primary Featured Image" : `Secondary Image #${index + 1}`}
+                  </span>
                   {images.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
                     >
-                      Remove Slot
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
                     </button>
                   )}
                 </div>
 
-                {/* Preview */}
                 {img && (
-                  <div className="relative w-full h-32 bg-black border border-white/10 rounded-lg overflow-hidden">
-                    <Image
-                      src={img}
-                      alt={`Preview ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateImage(index, "");
-                      }}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 rounded text-white hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                  <div className="relative w-full h-40 bg-black/40 rounded-lg overflow-hidden border border-white/10">
+                    <Image src={img} alt={`Preview ${index + 1}`} fill className="object-contain" unoptimized />
                   </div>
                 )}
 
-                {/* URL Input */}
                 <input
                   type="text"
                   value={img}
                   onChange={(e) => updateImage(index, e.target.value)}
-                  placeholder="Paste image URL or upload below"
-                  className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors text-sm"
+                  placeholder="Paste direct image URL or upload below"
+                  className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors text-sm"
                 />
 
-                {/* Upload */}
-                <label
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
-                  className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-white/20 rounded-lg px-3 py-2 cursor-pointer hover:border-[var(--accent-1)] hover:bg-white/5 transition-all"
-                >
+                <label className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-white/20 rounded-lg px-3 py-2 cursor-pointer hover:border-[#c9a227] hover:bg-white/5 transition-all">
                   {uploadingImages[index] ? (
                     <>
-                      <Loader className="w-4 h-4 animate-spin text-[var(--accent-1)]" />
-                      <span className="text-xs text-zinc-400">Uploading...</span>
+                      <Loader className="w-4 h-4 animate-spin text-[#c9a227]" />
+                      <span className="text-xs text-zinc-400">Uploading to server...</span>
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 text-zinc-400" />
-                      <span className="text-xs text-zinc-400">Upload / Drag & Drop Image</span>
+                      <span className="text-xs text-zinc-400">Upload Image File</span>
                     </>
                   )}
                   <input
@@ -588,166 +662,209 @@ export default function EditProductPage({
           </div>
         </div>
 
-        {/* Frames / Finishes */}
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
-            Frame / Finish Options (press Enter to add)
-          </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {colors.map((color) => (
-              <span
-                key={color}
-                className="flex items-center gap-1.5 text-xs bg-[#c9a227]/10 text-[#c9a227] border border-[#c9a227]/30 px-3 py-1.5 rounded-lg font-medium"
-              >
-                {color}
-                <button
-                  type="button"
-                  onClick={() => removeColor(color)}
-                  className="hover:text-white transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={colorInput}
-            onChange={(e) => setColorInput(e.target.value)}
-            onKeyDown={handleColorKeyDown}
-            placeholder="Type a frame option (e.g. Teak Wood Frame, 22KT Gold Foil) and press Enter..."
-            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors text-sm"
-          />
-        </div>
-
-        {/* Dimensions / Sizes */}
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
-            Print Dimensions / Sizes (press Enter to add)
-          </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {sizes.map((size) => (
-              <span
-                key={size}
-                className="flex items-center gap-1.5 text-xs bg-[#c9a227]/10 text-[#c9a227] border border-[#c9a227]/30 px-3 py-1.5 rounded-lg font-medium"
-              >
-                {size}
-                <button
-                  type="button"
-                  onClick={() => removeSize(size)}
-                  className="hover:text-white transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={sizeInput}
-            onChange={(e) => setSizeInput(e.target.value)}
-            onKeyDown={handleSizeKeyDown}
-            placeholder="Type a dimension (e.g. 12 x 18 in, 16 x 24 in) and press Enter..."
-            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors text-sm"
-          />
-        </div>
-
-        {/* isNew toggle */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              isNew ? "bg-[#c9a227]" : "bg-zinc-800"
-            }`}
-            onClick={() => setIsNew(!isNew)}
-          >
-            <div
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-black transition-transform ${
-                isNew ? "translate-x-5" : ""
-              }`}
-            />
-          </div>
-          <span className="text-sm text-zinc-300">Mark as New Arrival</span>
-        </label>
-
-        {/* isTrending toggle */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              isTrending ? "bg-[#c9a227]" : "bg-zinc-800"
-            }`}
-            onClick={() => setIsTrending(!isTrending)}
-          >
-            <div
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-black transition-transform ${
-                isTrending ? "translate-x-5" : ""
-              }`}
-            />
-          </div>
-          <span className="text-sm text-zinc-300">Display on Trending List on Homepage</span>
-        </label>
-
-        {message && (
-          <div
-            className={`rounded-2xl p-4 text-sm font-medium ${
-              message.type === "error"
-                ? "bg-red-500/10 text-red-300 border border-red-500/20"
-                : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        {/* Delete Confirmation Box */}
-        {showDeleteConfirm && (
-          <div className="rounded-2xl p-4 bg-red-950/40 border border-red-500/30 text-white space-y-3">
-            <p className="text-sm font-semibold text-red-300">
-              Are you sure you want to permanently delete this artwork? This cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={handleDelete}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white transition-all disabled:opacity-50"
-              >
-                {deleting ? "Deleting..." : "Yes, Delete Permanently"}
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-300 transition-all"
-              >
-                Cancel
-              </button>
+        {/* SECTION: SIZES & CUSTOM PRICING */}
+        <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="font-serif text-lg text-white font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#c9a227]" />
+                Dimensions / Sizes & Price Differences
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Set individual price additions for larger print dimensions (e.g. +₹500 for 15×18)
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setSizes(STANDARD_DEVOTIONAL_SIZES)}
+              className="text-[11px] font-bold text-[#c9a227] bg-[#c9a227]/10 hover:bg-[#c9a227]/20 border border-[#c9a227]/30 px-3 py-1.5 rounded-lg transition-all w-fit"
+            >
+              + Load Standard Tanjore Sizes
+            </button>
           </div>
-        )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={saving || deleting}
-            className="sm:w-1/3 flex items-center justify-center gap-2 border border-red-500/30 bg-red-500/10 text-red-400 font-bold uppercase tracking-wider text-xs px-6 py-4 rounded-xl hover:bg-red-500/20 transition-all disabled:opacity-50"
+          {/* Existing Sizes Chips */}
+          <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-black/40 rounded-xl border border-white/5">
+            {sizes.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-1">No custom sizes configured. Add one below.</span>
+            ) : (
+              sizes.map((s) => {
+                const totalPrice = basePriceNum + s.priceDelta;
+                return (
+                  <span
+                    key={s.label}
+                    className="flex items-center gap-2 text-xs bg-black border border-[#c9a227]/40 text-white px-3 py-2 rounded-lg"
+                  >
+                    <span className="font-semibold">{s.label}</span>
+                    <span className="text-[#e8c75d] font-bold">
+                      {s.priceDelta > 0 ? `+₹${s.priceDelta.toLocaleString("en-IN")}` : "+₹0"}
+                    </span>
+                    <span className="text-zinc-500 text-[10px]">
+                      (₹{totalPrice.toLocaleString("en-IN")})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSize(s.label)}
+                      className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                );
+              })
+            )}
+          </div>
+
+          {/* Add Size Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_auto] gap-2 pt-1">
+            <input
+              type="text"
+              value={sizeInput}
+              onChange={(e) => setSizeInput(e.target.value)}
+              placeholder="Dimension (e.g. 15 × 18 inches)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <input
+              type="number"
+              value={sizeDeltaInput}
+              onChange={(e) => setSizeDeltaInput(e.target.value)}
+              placeholder="Extra Price ₹ (e.g. 500)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleAddSize}
+              className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Add Size
+            </button>
+          </div>
+        </div>
+
+        {/* SECTION: MATERIALS / FRAMING & CUSTOM PRICING */}
+        <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="font-serif text-lg text-white font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#c9a227]" />
+                Materials, Gold & Framing Options
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Set price additions for 24KT Gold leaf, Teak framing, or premium finishes
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMaterials(STANDARD_DEVOTIONAL_MATERIALS)}
+              className="text-[11px] font-bold text-[#c9a227] bg-[#c9a227]/10 hover:bg-[#c9a227]/20 border border-[#c9a227]/30 px-3 py-1.5 rounded-lg transition-all w-fit"
+            >
+              + Load Standard Gold & Framing
+            </button>
+          </div>
+
+          {/* Existing Materials Chips */}
+          <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-black/40 rounded-xl border border-white/5">
+            {materials.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-1">No framing options configured. Add one below.</span>
+            ) : (
+              materials.map((m) => {
+                const totalPrice = basePriceNum + m.priceDelta;
+                return (
+                  <span
+                    key={m.label}
+                    className="flex items-center gap-2 text-xs bg-black border border-[#c9a227]/40 text-white px-3 py-2 rounded-lg"
+                  >
+                    <span className="font-semibold">{m.label}</span>
+                    <span className="text-[#e8c75d] font-bold">
+                      {m.priceDelta > 0 ? `+₹${m.priceDelta.toLocaleString("en-IN")}` : "+₹0"}
+                    </span>
+                    <span className="text-zinc-500 text-[10px]">
+                      (₹{totalPrice.toLocaleString("en-IN")})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMaterial(m.label)}
+                      className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                );
+              })
+            )}
+          </div>
+
+          {/* Add Material Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_auto] gap-2 pt-1">
+            <input
+              type="text"
+              value={materialInput}
+              onChange={(e) => setMaterialInput(e.target.value)}
+              placeholder="Material / Finish (e.g. 24 Carat Exclusive)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <input
+              type="number"
+              value={materialDeltaInput}
+              onChange={(e) => setMaterialDeltaInput(e.target.value)}
+              placeholder="Extra Price ₹ (e.g. 2000)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleAddMaterial}
+              className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Add Material
+            </button>
+          </div>
+        </div>
+
+        {/* Toggles: New Arrival & Trending */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="flex items-center gap-3 cursor-pointer p-4 bg-zinc-950 border border-white/10 rounded-xl">
+            <input
+              type="checkbox"
+              checked={isNew}
+              onChange={(e) => setIsNew(e.target.checked)}
+              className="w-4 h-4 accent-[#c9a227]"
+            />
+            <span className="text-sm font-semibold text-white">Mark as New Sacred Arrival</span>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer p-4 bg-zinc-950 border border-white/10 rounded-xl">
+            <input
+              type="checkbox"
+              checked={isTrending}
+              onChange={(e) => setIsTrending(e.target.checked)}
+              className="w-4 h-4 accent-[#c9a227]"
+            />
+            <span className="text-sm font-semibold text-white">Feature in Trending Sanctum Artwork</span>
+          </label>
+        </div>
+
+        {/* Submit Actions */}
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-white/10">
+          <Link
+            href="/admin/products"
+            className="px-6 py-3.5 border border-white/20 rounded-xl text-xs uppercase tracking-wider font-semibold text-zinc-300 hover:bg-white/5 transition-all"
           >
-            <Trash2 className="w-4 h-4" />
-            Delete Artwork
-          </button>
-
+            Cancel
+          </Link>
           <button
             type="submit"
-            disabled={saving || deleting}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#c9a227]/20"
+            disabled={saving}
+            className="flex items-center gap-2 px-8 py-3.5 bg-[#c9a227] hover:bg-[#dfb532] text-black font-bold uppercase tracking-wider text-xs rounded-xl shadow-lg shadow-[#c9a227]/20 transition-all disabled:opacity-50"
           >
             {saving ? (
-              "Saving..."
+              <>
+                <Loader className="w-4 h-4 animate-spin text-black" />
+                <span>Saving Changes...</span>
+              </>
             ) : (
               <>
-                <Save className="w-4 h-4" />
-                Save Changes
+                <Save className="w-4 h-4 text-black" />
+                <span>Update Artwork</span>
               </>
             )}
           </button>

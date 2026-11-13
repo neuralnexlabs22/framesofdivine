@@ -29,8 +29,8 @@ export interface Product {
   category: "Deity Paintings" | "Temple Paintings" | "Sculpture Paintings" | "Premium Sets" | string;
   images: string[];
   description: string;
-  sizes: string[];
-  colors: string[];
+  sizes: any[];
+  colors: any[];
   stock: number;
   isNew: boolean;
   isTrending?: boolean;

@@ -14,6 +14,19 @@ export type DevotionalCategory = {
   image: string;
 };
 
+function extractCategoryAndDescription(row: any): { category: string; description: string } {
+  let cat = row.category_id || row.category || "Deity Paintings";
+  let desc = row.description || "";
+  if (desc) {
+    const match = desc.match(/<!--category:(.*?)-->/);
+    if (match) {
+      cat = match[1];
+      desc = desc.replace(/<!--category:.*?-->\s*/, "");
+    }
+  }
+  return { category: cat, description: desc };
+}
+
 function mapRowToDevotionalProduct(row: any): DevotionalProduct {
   const slug =
     row.slug ||
@@ -24,24 +37,35 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
     ? [row.images]
     : [];
 
+  const { category, description } = extractCategoryAndDescription(row);
+
+  const firstSize = Array.isArray(row.sizes) && row.sizes[0]
+    ? (typeof row.sizes[0] === "object" ? row.sizes[0].label : String(row.sizes[0]))
+    : "12 x 18 in / 22KT Gold Tanjore";
+
   return {
     id: row.id,
     slug,
     name: row.name,
-    category: row.category || "Deity Paintings",
+    category,
     price: Number(row.price) || 1,
     originalPrice: row.original_price
       ? Number(row.original_price)
       : Math.round((Number(row.price) || 1) * 1.35),
     description:
-      row.description ||
+      description ||
       `Authentic 22KT gold Tanjore devotional artwork: ${row.name}`,
     image: images[0] || devotionalAssets.deityMontage.src,
     imageAlt: row.name,
-    badge: row.brand || row.category || "Tanjore Artwork",
-    size:
-      (Array.isArray(row.sizes) && row.sizes[0]) ||
-      "12 x 18 in / 22KT Gold Tanjore",
+    badge: row.brand || category || "Tanjore Artwork",
+    size: firstSize,
+    sizes: Array.isArray(row.sizes) ? row.sizes : [],
+    colors: Array.isArray(row.colors) ? row.colors : [],
+    materials: Array.isArray(row.materials)
+      ? row.materials
+      : Array.isArray(row.colors)
+      ? row.colors
+      : [],
   };
 }
 
@@ -141,11 +165,15 @@ export async function getDevotionalProductsAsync(
   }
 
   const cleanCat = categorySlug.toLowerCase().trim();
+  const slugCat = cleanCat.replace(/\s+/g, "-");
   return allProducts.filter((product) => {
-    const cat = product.category.toLowerCase();
+    const cat = product.category.toLowerCase().trim();
+    const catSlug = cat.replace(/\s+/g, "-");
     return (
+      cat === cleanCat ||
+      catSlug === slugCat ||
       cat.includes(cleanCat) ||
-      cat.replace(/\s+/g, "-") === cleanCat ||
+      cleanCat.includes(cat) ||
       (cleanCat === "deity-prints" && cat.includes("deity")) ||
       (cleanCat === "temple-prints" && cat.includes("temple")) ||
       (cleanCat === "sculpture-prints" && cat.includes("sculpture")) ||
@@ -153,3 +181,4 @@ export async function getDevotionalProductsAsync(
     );
   });
 }
+
