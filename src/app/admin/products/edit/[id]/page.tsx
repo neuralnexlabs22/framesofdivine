@@ -495,7 +495,7 @@ export default function EditProductPage({
               <button
                 type="button"
                 onClick={addImageField}
-                className="flex items-center gap-1.5 text-xs text-[var(--accent-1)] bg-[var(--accent-1)]/10 px-3 py-1.5 rounded-lg hover:bg-[var(--accent-1)]/20 transition-all font-bold"
+                className="flex items-center gap-1.5 text-xs text-[#c9a227] bg-[#c9a227]/10 px-3 py-1.5 rounded-lg hover:bg-[#c9a227]/20 transition-all font-bold"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Image Slot
@@ -656,7 +656,7 @@ export default function EditProductPage({
         <label className="flex items-center gap-3 cursor-pointer">
           <div
             className={`relative w-11 h-6 rounded-full transition-colors ${
-              isNew ? "bg-[var(--accent-1)]" : "bg-zinc-800"
+              isNew ? "bg-[#c9a227]" : "bg-zinc-800"
             }`}
             onClick={() => setIsNew(!isNew)}
           >
@@ -673,7 +673,7 @@ export default function EditProductPage({
         <label className="flex items-center gap-3 cursor-pointer">
           <div
             className={`relative w-11 h-6 rounded-full transition-colors ${
-              isTrending ? "bg-[var(--accent-1)]" : "bg-zinc-800"
+              isTrending ? "bg-[#c9a227]" : "bg-zinc-800"
             }`}
             onClick={() => setIsTrending(!isTrending)}
           >
@@ -740,7 +740,7 @@ export default function EditProductPage({
           <button
             type="submit"
             disabled={saving || deleting}
-            className="flex-1 flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#c9a227]/20"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#c9a227]/20"
           >
             {saving ? (
               "Saving..."

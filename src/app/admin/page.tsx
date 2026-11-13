@@ -451,7 +451,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-semibold text-white truncate">
                     {product.name}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-300 font-medium">
                     {product.category} · {product.brand}
                   </p>
                 </div>

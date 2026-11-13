@@ -43,11 +43,11 @@ export default function ShopPage() {
               <Link key={category.slug} href={`/shop/${category.slug}`} className="group block border border-black-deep/15 bg-white-pure">
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <Image src={category.image} alt={category.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-[1200ms] group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black-deep/86 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 p-5">
-                    <Sparkles className="mb-4 h-5 w-5 text-black-deep/60" />
-                    <h3 className="font-serif text-2xl text-black-deep">{category.name}</h3>
-                    <p className="mt-3 text-xs leading-6 text-black-charcoal/70">{category.description}</p>
+                    <Sparkles className="mb-4 h-5 w-5 text-[#c9a227]" />
+                    <h3 className="font-serif text-2xl text-white font-medium drop-shadow-md">{category.name}</h3>
+                    <p className="mt-2 text-xs leading-5 text-zinc-200 drop-shadow">{category.description}</p>
                   </div>
                 </div>
               </Link>

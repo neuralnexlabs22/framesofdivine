@@ -163,7 +163,7 @@ export default function EditCategoryPage() {
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 bg-[var(--accent-1)] text-black font-black uppercase text-sm py-3 rounded-lg disabled:opacity-50"
+            className="flex-1 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm py-3.5 rounded-xl hover:brightness-110 disabled:opacity-50 transition-all shadow-md shadow-[#c9a227]/20"
           >
             {saving ? "Saving..." : "Save Category"}
           </button>

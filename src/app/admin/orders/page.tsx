@@ -532,7 +532,7 @@ export default function AdminOrdersPage() {
                           <div key={idx} className="p-3 flex justify-between items-center text-xs">
                             <div>
                               <p className="font-semibold text-white">{item.name}</p>
-                              <p className="text-[11px] text-zinc-500">
+                              <p className="text-[11px] text-zinc-300 font-medium">
                                 {item.size || "Standard"} · {item.frame || "22KT Gold Frame"} · Qty: {item.quantity}
                               </p>
                             </div>

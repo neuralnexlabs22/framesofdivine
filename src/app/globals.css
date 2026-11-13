@@ -7,6 +7,9 @@
   --foreground: #1a1108;
   --ivory: #f4f1ea;
   --charcoal: #171717;
+  --accent-1: #c9a227;
+  --accent-gold: #c9a227;
+  --gold: #c9a227;
   --border-dark: rgba(255, 255, 255, 0.16);
   --border-light: rgba(8, 8, 8, 0.16);
 }

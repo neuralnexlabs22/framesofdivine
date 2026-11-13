@@ -104,7 +104,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm py-4 rounded-lg hover:brightness-110 disabled:opacity-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm py-4 rounded-xl hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-[#c9a227]/20"
           >
             {loading ? (
               <>

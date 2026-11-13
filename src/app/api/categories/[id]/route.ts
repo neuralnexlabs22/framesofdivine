@@ -54,3 +54,4 @@ export async function DELETE(
     return NextResponse.json({ error: err?.message || "Failed to delete category" }, { status: 500 });
   }
 }
+

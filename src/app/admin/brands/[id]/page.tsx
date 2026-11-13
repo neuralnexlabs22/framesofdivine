@@ -409,7 +409,7 @@ export default function EditBrandPage() {
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-lg hover:brightness-110 disabled:opacity-50 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 disabled:opacity-50 transition-all shadow-md shadow-[#c9a227]/20"
           >
             {saving ? (
               <>
@@ -453,9 +453,9 @@ export default function EditBrandPage() {
           </h2>
           <Link
             href="/admin/products/add"
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-1)] text-black rounded hover:brightness-110 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-xl hover:brightness-110 transition-all shadow-md shadow-[#c9a227]/20"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Add Product
           </Link>
         </div>
@@ -467,7 +467,7 @@ export default function EditBrandPage() {
             <p className="text-zinc-500 mb-6">Add a product and select this brand in the form</p>
             <Link
               href="/admin/products/add"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--accent-1)] text-black rounded font-bold hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#c9a227] text-black rounded-xl font-bold uppercase tracking-wider text-xs hover:brightness-110 transition-all shadow-md shadow-[#c9a227]/20"
             >
               <Plus className="w-5 h-5" />
               Add Product

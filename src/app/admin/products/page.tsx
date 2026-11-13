@@ -257,7 +257,7 @@ export default function AdminProductsPage() {
                     <p className="text-sm font-bold text-white truncate">
                       {product.name}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <p className="text-xs text-zinc-300 font-medium mt-0.5">
                       {product.brand} · {product.category}
                     </p>
                     <div className="flex items-center gap-2 mt-2">

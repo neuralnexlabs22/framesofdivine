@@ -195,20 +195,20 @@ export default function AdminCategoriesPage() {
         <div className="overflow-x-auto bg-[#070707] border border-white/5 rounded-2xl">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 font-medium">
+              <tr className="border-b border-white/10">
+                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-300 font-bold">
                   Name
                 </th>
-                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 font-medium">
+                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-300 font-bold">
                   Slug
                 </th>
-                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 font-medium hidden sm:table-cell">
+                <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-300 font-bold hidden sm:table-cell">
                   Description
                 </th>
-                <th className="text-center px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 font-medium">
+                <th className="text-center px-5 py-4 text-xs uppercase tracking-wider text-zinc-300 font-bold">
                   Status
                 </th>
-                <th className="text-right px-5 py-4 text-xs uppercase tracking-wider text-zinc-500 font-medium">
+                <th className="text-right px-5 py-4 text-xs uppercase tracking-wider text-zinc-300 font-bold">
                   Actions
                 </th>
               </tr>
@@ -224,20 +224,20 @@ export default function AdminCategoriesPage() {
                   <td className="px-5 py-4 text-sm font-semibold text-white">
                     {cat.name}
                   </td>
-                  <td className="px-5 py-4 text-sm text-zinc-400 font-mono">
+                  <td className="px-5 py-4 text-sm text-zinc-300 font-mono">
                     {cat.slug}
                   </td>
-                  <td className="px-5 py-4 text-sm text-zinc-500 truncate max-w-xs hidden sm:table-cell">
+                  <td className="px-5 py-4 text-sm text-zinc-300 truncate max-w-xs hidden sm:table-cell">
                     {cat.description || "—"}
                   </td>
                   <td className="px-5 py-4 text-center">
                     <button
                       onClick={() => handleToggleActive(cat.id, cat.is_active)}
-                      className="inline-flex items-center justify-center"
+                      className="inline-flex items-center justify-center p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                       title={cat.is_active ? "Deactivate" : "Activate"}
                     >
                       {cat.is_active ? (
-                        <Eye className="w-5 h-5 text-green-500" />
+                        <Eye className="w-5 h-5 text-green-400" />
                       ) : (
                         <EyeOff className="w-5 h-5 text-zinc-500" />
                       )}
@@ -255,7 +255,7 @@ export default function AdminCategoriesPage() {
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(null)}
-                            className="px-2 py-1 rounded text-xs font-bold bg-white/5 text-zinc-400 hover:bg-white/10"
+                            className="px-2 py-1 rounded text-xs font-bold bg-white/5 text-zinc-300 hover:bg-white/10"
                           >
                             Cancel
                           </button>
@@ -264,14 +264,14 @@ export default function AdminCategoriesPage() {
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/admin/categories/${cat.id}`}
-                            className="p-2 rounded-lg text-zinc-400 hover:text-[var(--accent-1)] hover:bg-white/5 transition-all"
+                            className="p-2 rounded-lg bg-white/5 text-zinc-300 hover:text-[#c9a227] hover:bg-white/10 transition-all"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => setDeleteConfirm(cat.id)}
-                            className="p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            className="p-2 rounded-lg bg-white/5 text-zinc-300 hover:text-red-400 hover:bg-red-500/20 transition-all"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />

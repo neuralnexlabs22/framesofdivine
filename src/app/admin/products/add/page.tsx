@@ -579,7 +579,7 @@ export default function AddProductPage() {
                         });
                       }
                     }}
-                    className="px-3 py-2 bg-[var(--accent-1)] rounded text-black text-xs font-medium hover:brightness-105 transition-all"
+                    className="px-3 py-2 bg-[#c9a227] rounded-lg text-black text-xs font-bold hover:brightness-110 transition-all shadow-sm"
                   >
                     Import URL
                   </button>
@@ -756,7 +756,7 @@ export default function AddProductPage() {
               <button
                 type="button"
                 onClick={() => addTag(materialInput, setMaterialInput, "materials")}
-                className="px-4 py-3 bg-[var(--accent-1)] text-black rounded-lg font-bold hover:brightness-110 transition-all"
+                className="px-5 py-3 bg-[#c9a227] text-black rounded-lg font-bold hover:brightness-110 transition-all text-xs uppercase tracking-wider shadow-sm"
               >
                 Add
               </button>
@@ -808,7 +808,7 @@ export default function AddProductPage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[#c9a227]/20"
         >
           {saving ? (
             <>

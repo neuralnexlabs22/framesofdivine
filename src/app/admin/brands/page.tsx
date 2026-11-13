@@ -121,8 +121,8 @@ export default function AdminBrandsPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-[var(--accent-1)]/20 border-t-[var(--accent-1)] rounded-full animate-spin" />
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold">
+          <div className="w-8 h-8 border-2 border-[#c9a227]/20 border-t-[#c9a227] rounded-full animate-spin" />
+          <p className="text-xs text-zinc-400 uppercase tracking-widest font-bold">
             Loading brands...
           </p>
         </div>
@@ -312,11 +312,11 @@ export default function AdminBrandsPage() {
               <div key={categoryId} className="space-y-4">
                 {/* Category Section Header */}
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-                  <span className="w-1.5 h-5 bg-[var(--accent-1)] rounded-full" />
-                  <h2 className="text-lg font-black uppercase tracking-wider text-[var(--accent-1)]">
+                  <span className="w-1.5 h-5 bg-[#c9a227] rounded-full" />
+                  <h2 className="text-lg font-black uppercase tracking-wider text-[#c9a227]">
                     {getCategoryName(categoryId)}
                   </h2>
-                  <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-zinc-400 font-bold ml-2">
+                  <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold ml-2">
                     {categoryBrands.length}
                   </span>
                 </div>
@@ -329,14 +329,14 @@ export default function AdminBrandsPage() {
                       layout
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-[#070707] border border-white/5 rounded-xl p-4 hover:border-[var(--accent-1)]/20 transition-all group"
+                      className="bg-[#070707] border border-white/5 rounded-xl p-4 hover:border-[#c9a227]/30 transition-all group"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-bold text-white truncate">
                             {brand.name}
                           </h3>
-                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">
+                          <p className="text-[10px] text-zinc-400 truncate mt-0.5">
                             {brand.description || "No description"}
                           </p>
                         </div>
@@ -387,17 +387,17 @@ export default function AdminBrandsPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-all">
                             <Link
                               href={`/admin/brands/${brand.id}`}
-                              className="p-1.5 rounded-lg text-zinc-600 hover:text-[var(--accent-1)] hover:bg-white/5 transition-all"
+                              className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-[#c9a227] hover:bg-white/10 transition-all"
                               title="Edit brand"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </Link>
                             <button
                               onClick={() => setDeleteConfirm(brand.id)}
-                              className="p-1.5 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-red-400 hover:bg-red-500/20 transition-all"
                               title="Delete brand"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

@@ -504,8 +504,8 @@ export default function CartDrawer() {
                       </div>
                     )}
                     <div className="flex justify-between text-[11px]">
-                      <span>Packaging & Delivery</span>
-                      <span className="text-zinc-500">Free Insured Packaging</span>
+                      <span className="text-zinc-300">Packaging & Delivery</span>
+                      <span className="text-zinc-300 font-medium">Free Insured Packaging</span>
                     </div>
                     <div className="flex justify-between border-t border-black-deep/10 pt-2 text-base font-serif font-bold text-white">
                       <span>Final Total</span>
@@ -574,7 +574,7 @@ export default function CartDrawer() {
                 <div className="font-mono text-sm font-bold text-[#c9a227] bg-[#c9a227]/10 py-2 px-4 rounded-xl inline-block border border-[#c9a227]/30">
                   {orderSuccess}
                 </div>
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-xs text-zinc-300">
                   Our team will contact you via WhatsApp to confirm framing details and dispatch timing.
                 </p>
                 <button
@@ -746,7 +746,7 @@ export default function CartDrawer() {
                       <span>Total Payable:</span>
                       <span className="text-[#c9a227]">₹{finalTotal.toLocaleString("en-IN")}</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 pt-1 flex items-center gap-1">
+                    <p className="text-[11px] text-zinc-300 pt-1 flex items-center gap-1 font-medium">
                       <ShieldCheck className="h-3.5 w-3.5 text-[#c9a227]" />
                       {paymentMethod === "razorpay"
                         ? "256-Bit SSL Secured by Razorpay. 100% Buyer Protection."
