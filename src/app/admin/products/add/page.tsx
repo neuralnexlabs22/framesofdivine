@@ -217,7 +217,7 @@ export default function AddProductPage() {
         name: formData.name.trim(),
         brand: selectedBrand.name,
         price,
-        category: slugToProductCategory(selectedCategory.slug),
+        category: (selectedCategory.name || slugToProductCategory(selectedCategory.slug)) as any,
         images:
           validImages.length > 0
             ? validImages

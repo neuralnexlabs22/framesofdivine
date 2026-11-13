@@ -17,21 +17,33 @@ export default function BrandPage({
   const [sortBy, setSortBy] = useState("newest");
 
   const category = useMemo(
-    () => categories.find((c) => c.slug === categorySlug),
+    () =>
+      categories.find(
+        (c) =>
+          c.slug.toLowerCase() === categorySlug.toLowerCase() ||
+          c.id.toLowerCase() === categorySlug.toLowerCase()
+      ),
     [categories, categorySlug]
   );
 
   const brand = useMemo(
     () =>
       brands.find(
-        (b) => b.slug === brandSlug && b.category_id === categorySlug
+        (b) =>
+          b.slug.toLowerCase() === brandSlug.toLowerCase() &&
+          (b.category_id?.toLowerCase() === categorySlug.toLowerCase() ||
+            (category && b.category_id?.toLowerCase() === category.name.toLowerCase()))
       ),
-    [brands, brandSlug, categorySlug]
+    [brands, brandSlug, categorySlug, category]
   );
 
   const brandProducts = useMemo(() => {
     if (!brand) return [];
-    return products.filter((p) => p.brand === brand.name);
+    return products.filter(
+      (p) =>
+        p.brand?.toLowerCase() === brand.name?.toLowerCase() ||
+        p.brand?.toLowerCase() === brand.slug?.toLowerCase()
+    );
   }, [products, brand]);
 
   const sortedProducts = useMemo(() => {

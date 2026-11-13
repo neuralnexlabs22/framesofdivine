@@ -21,11 +21,12 @@ import {
 
 export interface Product {
   id: string;
+  slug?: string;
   name: string;
   brand: string;
   price: number;
   originalPrice?: number;
-  category: "Deity Paintings" | "Temple Paintings" | "Sculpture Paintings" | "Premium Sets";
+  category: "Deity Paintings" | "Temple Paintings" | "Sculpture Paintings" | "Premium Sets" | string;
   images: string[];
   description: string;
   sizes: string[];

@@ -1,32 +1,57 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import DevotionalProductCard from "@/components/DevotionalProductCard";
 import ShopProductGrid from "@/components/ShopProductGrid";
-import { devotionalCategories, devotionalProducts } from "@/data/devotionalProducts";
 import { devotionalAssets } from "@/data/devotional";
+import {
+  getDevotionalCategoriesAsync,
+  getDevotionalProductsAsync,
+} from "@/lib/devotionalServer";
 
-export default function ShopPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ShopPage() {
+  const [categories, products] = await Promise.all([
+    getDevotionalCategoriesAsync(),
+    getDevotionalProductsAsync(),
+  ]);
+
   return (
     <div className="theme-light min-h-screen pt-28">
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:items-center">
         <div>
           <p className="eyebrow text-black-deep/60">God Photo Shop</p>
-          <h1 className="section-title text-black-deep">Devotional Paintings For Home, Pooja Room, And Gifting</h1>
+          <h1 className="section-title text-black-deep">
+            Devotional Paintings For Home, Pooja Room, And Gifting
+          </h1>
           <p className="mt-7 max-w-2xl text-sm leading-8 text-black-charcoal/72">
-            Shop authentic 22KT gold Tanjore paintings, sacred temple artwork, and curated pooja room sanctum collections.
+            Shop authentic 22KT gold Tanjore paintings, sacred temple artwork,
+            and curated pooja room sanctum collections.
           </p>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-            <Link href="#products" className="inline-flex w-fit items-center gap-3 border border-black-deep px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:bg-black-deep hover:text-white">
+            <Link
+              href="#products"
+              className="inline-flex w-fit items-center gap-3 border border-black-deep px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:bg-black-deep hover:text-white"
+            >
               Shop Paintings <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/contact" className="inline-flex w-fit items-center gap-3 border border-black-deep/25 px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:border-black-deep">
+            <Link
+              href="/contact"
+              className="inline-flex w-fit items-center gap-3 border border-black-deep/25 px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:border-black-deep"
+            >
               Custom Order
             </Link>
           </div>
         </div>
         <div className="relative min-h-[520px] overflow-hidden border border-black-deep/15">
-          <Image src={devotionalAssets.hero.src} alt={devotionalAssets.hero.alt} fill priority sizes="(max-width: 768px) 100vw, 55vw" className="object-cover" />
+          <Image
+            src={devotionalAssets.hero.src}
+            alt={devotionalAssets.hero.alt}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 55vw"
+            className="object-cover"
+          />
         </div>
       </section>
 
@@ -35,19 +60,35 @@ export default function ShopPage() {
           <div className="mb-10 flex items-end justify-between gap-6">
             <div>
               <p className="eyebrow text-black-deep/60">Collections</p>
-              <h2 className="font-serif text-4xl uppercase text-black-deep">Shop By Devotional Category</h2>
+              <h2 className="font-serif text-4xl uppercase text-black-deep">
+                Shop By Devotional Category
+              </h2>
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {devotionalCategories.map((category) => (
-              <Link key={category.slug} href={`/shop/${category.slug}`} className="group block border border-black-deep/15 bg-white-pure">
+            {categories.map((category) => (
+              <Link
+                key={category.slug}
+                href={`/shop/${category.slug}`}
+                className="group block border border-black-deep/15 bg-white-pure"
+              >
                 <div className="relative aspect-[4/5] overflow-hidden">
-                  <Image src={category.image} alt={category.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-[1200ms] group-hover:scale-110" />
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-[1200ms] group-hover:scale-110"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 p-5">
                     <Sparkles className="mb-4 h-5 w-5 text-[#c9a227]" />
-                    <h3 className="font-serif text-2xl text-white font-medium drop-shadow-md">{category.name}</h3>
-                    <p className="mt-2 text-xs leading-5 text-zinc-200 drop-shadow">{category.description}</p>
+                    <h3 className="font-serif text-2xl text-white font-medium drop-shadow-md">
+                      {category.name}
+                    </h3>
+                    <p className="mt-2 text-xs leading-5 text-zinc-200 drop-shadow">
+                      {category.description}
+                    </p>
                   </div>
                 </div>
               </Link>
@@ -61,15 +102,21 @@ export default function ShopPage() {
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <p className="eyebrow text-black-deep/60">Featured Products</p>
-              <h2 className="section-title text-black-deep">Sacred Devotional Paintings</h2>
+              <h2 className="section-title text-black-deep">
+                Sacred Devotional Paintings
+              </h2>
             </div>
             <p className="max-w-lg text-sm leading-7 text-black-charcoal/70">
-              Browse divine deities, architectural temple wonders, and sanctum wall artwork with search, category filtering, and sorting.
+              Browse divine deities, architectural temple wonders, and sanctum
+              wall artwork with search, category filtering, and sorting.
             </p>
           </div>
           <ShopProductGrid
-            initialProducts={devotionalProducts}
-            categories={devotionalCategories.map((c) => ({ slug: c.slug, name: c.name }))}
+            initialProducts={products}
+            categories={categories.map((c) => ({
+              slug: c.slug,
+              name: c.name,
+            }))}
           />
         </div>
       </section>

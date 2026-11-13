@@ -34,7 +34,7 @@ export default function HomePage() {
   const displayProducts = (loaded && liveProducts.length > 0)
     ? liveProducts.map((p) => ({
         id: p.id,
-        slug: p.id.startsWith("prod-") ? p.id.replace("prod-", "") : p.id,
+        slug: p.slug || (p.id.startsWith("prod-") ? p.id.replace("prod-", "") : p.id),
         name: p.name,
         category: p.category,
         price: p.price,

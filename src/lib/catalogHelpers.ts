@@ -26,12 +26,12 @@ const CATEGORY_TO_SLUG: Record<ProductCategory, string> = {
   "Premium Sets": "premium-sets",
 };
 
-export function slugToProductCategory(slug: string): ProductCategory {
-  return SLUG_TO_CATEGORY[slug] || "Deity Paintings";
+export function slugToProductCategory(slug: string, fallbackName?: string): string {
+  return SLUG_TO_CATEGORY[slug] || fallbackName || slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function productCategoryToSlug(category: ProductCategory): string {
-  return CATEGORY_TO_SLUG[category] || "deity-prints";
+export function productCategoryToSlug(category: string): string {
+  return CATEGORY_TO_SLUG[category as ProductCategory] || category.toLowerCase().replace(/\s+/g, "-");
 }
 
 export function getBrandsForProductCategory(

@@ -2,9 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { devotionalProducts, getDevotionalProduct } from "@/data/devotionalProducts";
+import { devotionalProducts } from "@/data/devotionalProducts";
+import {
+  getDevotionalProductAsync,
+  getDevotionalProductsAsync,
+} from "@/lib/devotionalServer";
 import ProductDetailActions from "@/components/ProductDetailActions";
 import DevotionalProductCard from "@/components/DevotionalProductCard";
+
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return devotionalProducts.map((product) => ({ slug: product.slug }));
@@ -12,11 +19,12 @@ export function generateStaticParams() {
 
 export default async function ProductPage(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
-  const product = getDevotionalProduct(slug);
+  const product = await getDevotionalProductAsync(slug);
   if (!product) notFound();
 
-  const relatedProducts = devotionalProducts
-    .filter((p) => p.slug !== slug)
+  const allProducts = await getDevotionalProductsAsync();
+  const relatedProducts = allProducts
+    .filter((p) => p.slug !== product.slug && p.id !== product.id)
     .sort((a, b) => (a.category === product.category ? -1 : 1))
     .slice(0, 4);
 
@@ -24,7 +32,10 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     <div className="theme-light min-h-screen pt-28">
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-[1fr_0.9fr] md:px-8 md:items-start">
         <div>
-          <Link href="/shop" className="mb-8 inline-flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep">
+          <Link
+            href="/shop"
+            className="mb-8 inline-flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep"
+          >
             <ArrowLeft className="h-4 w-4" /> Shop
           </Link>
           <div className="relative min-h-[680px] overflow-hidden border border-black-deep/15 bg-[#eae4d6]">
@@ -40,22 +51,41 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
                 }}
               />
             ) : (
-              <Image src={product.image} alt={product.imageAlt} fill priority sizes="(max-width: 768px) 100vw, 55vw" className="object-cover" />
+              <Image
+                src={product.image}
+                alt={product.imageAlt}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 55vw"
+                className="object-cover"
+              />
             )}
           </div>
         </div>
         <div className="sticky top-28 border border-black-deep/15 bg-[#f4f0e8] p-7">
-          <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-grey-stone">{product.category}</p>
-          <h1 className="font-serif text-4xl uppercase leading-tight text-black-deep md:text-5xl">{product.name}</h1>
-          <p className="mt-2 text-xs text-grey-stone">Tax included. Shipping calculated at checkout.</p>
-          <p className="mt-6 text-sm leading-8 text-black-charcoal/72">{product.description}</p>
+          <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[#c9a227] font-bold">
+            {product.category}
+          </p>
+          <h1 className="font-serif text-4xl uppercase leading-tight text-black-deep md:text-5xl">
+            {product.name}
+          </h1>
+          <p className="mt-2 text-xs text-grey-stone">
+            Tax included. Insured Pan-India delivery.
+          </p>
+          <p className="mt-6 text-sm leading-8 text-black-charcoal/72">
+            {product.description}
+          </p>
           <div className="mt-6">
             <ProductDetailActions product={product} />
           </div>
           {/* Free Delivery Badge */}
           <div className="mt-6 border-t border-black-deep/10 pt-4 flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-black-deep">FREE DELIVERY</span>
-            <span className="text-xs font-bold uppercase tracking-widest text-black-deep underline">PAN INDIA</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-black-deep">
+              FREE DELIVERY
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-black-deep underline">
+              PAN INDIA
+            </span>
           </div>
         </div>
       </section>
@@ -66,7 +96,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           <div className="mx-auto max-w-7xl">
             <div className="mb-8">
               <p className="eyebrow text-grey-stone">Sacred Collection</p>
-              <h2 className="font-serif text-3xl uppercase text-black-deep">Related Devotional Paintings</h2>
+              <h2 className="font-serif text-3xl uppercase text-black-deep">
+                Related Devotional Paintings
+              </h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {relatedProducts.map((rel) => (

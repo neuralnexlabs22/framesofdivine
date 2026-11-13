@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     brand TEXT NOT NULL DEFAULT 'Frames of Divine',
     price NUMERIC NOT NULL CHECK (price >= 0),
     original_price NUMERIC,
-    category TEXT NOT NULL CHECK (category IN ('Deity Paintings', 'Temple Paintings', 'Sculpture Paintings', 'Premium Sets')),
+    category TEXT NOT NULL,
+    category_id TEXT,
     images JSONB DEFAULT '[]'::jsonb,
     description TEXT,
     stock INTEGER DEFAULT 10,
@@ -27,6 +28,10 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON public.products (category);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products (slug);
 CREATE INDEX IF NOT EXISTS idx_products_is_new ON public.products (is_new);
 CREATE INDEX IF NOT EXISTS idx_products_is_trending ON public.products (is_trending);
+
+-- Migration for dynamic categories
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_category_check;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS category_id TEXT;
 
 -- 2. CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.categories (

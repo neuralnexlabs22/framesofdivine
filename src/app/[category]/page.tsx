@@ -16,16 +16,24 @@ export default function CategoryPage({
   const { categories, brands, loading } = useCatalog();
 
   const category = useMemo(
-    () => categories.find((c) => c.slug === categorySlug),
+    () =>
+      categories.find(
+        (c) =>
+          c.slug.toLowerCase() === categorySlug.toLowerCase() ||
+          c.id.toLowerCase() === categorySlug.toLowerCase()
+      ),
     [categories, categorySlug]
   );
 
   const categoryBrands = useMemo(
     () =>
       brands.filter(
-        (b) => b.category_id === categorySlug && b.is_active !== false
+        (b) =>
+          (b.category_id?.toLowerCase() === categorySlug.toLowerCase() ||
+            (category && b.category_id?.toLowerCase() === category.name.toLowerCase())) &&
+          b.is_active !== false
       ),
-    [brands, categorySlug]
+    [brands, categorySlug, category]
   );
 
   const filteredBrands = useMemo(() => {

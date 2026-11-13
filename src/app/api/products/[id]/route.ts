@@ -7,8 +7,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const encoded = encodeURIComponent(id);
     const { data, error } = await supabaseQuery<any[]>("products", {
-      query: `id=eq.${encodeURIComponent(id)}&limit=1`,
+      query: `or=(id.eq.${encoded},slug.eq.${encoded})&limit=1`,
       useServiceRole: true,
     });
 

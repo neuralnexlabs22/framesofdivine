@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,6 +9,7 @@ import Logo from "./Logo";
 import { useCart } from "@/context/CartContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useContactInfo } from "@/context/ContactInfoContext";
+import { useCatalog } from "@/context/CatalogContext";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -37,6 +38,16 @@ export default function Navbar() {
   const { totalItems, openCart } = useCart();
   const { getSetting } = useSiteSettings();
   const { contactInfo } = useContactInfo();
+  const { categories: catalogCategories } = useCatalog();
+
+  const activeCategoryLinks = useMemo(() => {
+    if (catalogCategories && catalogCategories.length > 0) {
+      return catalogCategories
+        .filter((c) => c.is_active !== false)
+        .map((c) => [c.name, `/shop/${c.slug}`] as [string, string]);
+    }
+    return categoryLinks;
+  }, [catalogCategories]);
 
   const phone = contactInfo?.phone_number || "8122228386";
   const announcementSetting = getSetting("announcement_bar") as { text?: string; enabled?: boolean } | undefined;
@@ -97,7 +108,7 @@ export default function Navbar() {
         </div>
         <nav className={`hidden border-t md:block ${isSolid ? "border-black-deep/10" : "border-white/15"}`}>
           <div className="mx-auto flex max-w-7xl items-center gap-8 overflow-x-auto px-8 py-3">
-            {categoryLinks.map(([label, href]) => (
+            {activeCategoryLinks.map(([label, href]) => (
               <Link key={href} href={href} className={`shrink-0 text-[10px] font-semibold uppercase tracking-[0.22em] transition-colors ${isSolid ? "text-black-deep/70 hover:text-black-deep" : "text-white/90 hover:text-[#c9a227]"}`}>
                 {label}
               </Link>

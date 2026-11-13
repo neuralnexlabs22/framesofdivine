@@ -128,9 +128,17 @@ export async function addProduct(product: Omit<Product, "id">): Promise<Product>
     throw new Error("Price must be a valid non-negative number");
   }
 
+  const slug =
+    (product as any).slug ||
+    product.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
   let created: Product = {
     ...product,
     price,
+    slug,
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   };
 

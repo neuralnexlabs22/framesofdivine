@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import DevotionalProductCard from "@/components/DevotionalProductCard";
 import type { DevotionalProduct } from "@/data/devotionalProducts";
 import { useProducts } from "@/context/ProductContext";
+import { useCatalog } from "@/context/CatalogContext";
 
 interface ShopProductGridProps {
   initialProducts: DevotionalProduct[];
@@ -13,46 +14,82 @@ interface ShopProductGridProps {
 
 export default function ShopProductGrid({ initialProducts, categories }: ShopProductGridProps) {
   const { products: liveProducts, loaded } = useProducts();
+  const { categories: catalogCategories } = useCatalog();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "name">("featured");
 
-  const effectiveProducts: DevotionalProduct[] = useMemo(() => {
-    if (loaded && liveProducts.length > 0) {
-      return liveProducts.map((p) => ({
-        id: p.id,
-        slug: p.id.startsWith("prod-") ? p.id.replace("prod-", "") : p.id,
-        name: p.name,
-        category: p.category,
-        price: p.price,
-        originalPrice: p.originalPrice || Math.round(p.price * 1.35),
-        description: p.description,
-        image: p.images?.[0] || "/assets/devotional/deity-gallery-montage.png",
-        imageAlt: p.name,
-        badge: p.brand || p.category,
-        size: p.sizes?.[0] || "12 x 18 in / 22KT Gold Tanjore",
-      }));
+  // Merge server categories with live catalog categories
+  const combinedCategories = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((c) => map.set(c.slug.toLowerCase(), c.name));
+    if (catalogCategories && catalogCategories.length > 0) {
+      catalogCategories.forEach((c) => {
+        if (c.is_active !== false) {
+          map.set(c.slug.toLowerCase(), c.name);
+        }
+      });
     }
-    return initialProducts;
+    return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
+  }, [categories, catalogCategories]);
+
+  // Merge initial products with live Supabase products
+  const effectiveProducts: DevotionalProduct[] = useMemo(() => {
+    const map = new Map<string, DevotionalProduct>();
+
+    // 1. Initial/static products
+    (initialProducts || []).forEach((p) => {
+      map.set(p.slug, p);
+      map.set(p.id, p);
+    });
+
+    // 2. Live Supabase products
+    if (loaded && liveProducts.length > 0) {
+      liveProducts.forEach((p) => {
+        const slug = p.slug || (p.id.startsWith("prod-") ? p.id.replace("prod-", "") : p.id);
+        const mapped: DevotionalProduct = {
+          id: p.id,
+          slug,
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          originalPrice: p.originalPrice || Math.round(p.price * 1.35),
+          description: p.description,
+          image: p.images?.[0] || "/assets/devotional/deity-gallery-montage.png",
+          imageAlt: p.name,
+          badge: p.brand || p.category,
+          size: p.sizes?.[0] || "12 x 18 in / 22KT Gold Tanjore",
+        };
+        map.set(slug, mapped);
+        map.set(p.id, mapped);
+      });
+    }
+
+    return Array.from(new Set(map.values()));
   }, [liveProducts, loaded, initialProducts]);
 
   const filteredAndSorted = useMemo(() => {
     return effectiveProducts
       .filter((product) => {
+        const targetCat = selectedCategory.toLowerCase();
+        const prodCat = product.category.toLowerCase();
         const matchesCategory =
           selectedCategory === "all" ||
-          product.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-          (selectedCategory === "deity-prints" && product.category.toLowerCase().includes("deity")) ||
-          (selectedCategory === "temple-prints" && product.category.toLowerCase().includes("temple")) ||
-          (selectedCategory === "sculpture-prints" && product.category.toLowerCase().includes("sculpture")) ||
-          (selectedCategory === "premium-sets" && product.category.toLowerCase().includes("set"));
+          prodCat.includes(targetCat) ||
+          prodCat.replace(/\s+/g, "-") === targetCat ||
+          (product.badge && product.badge.toLowerCase().includes(targetCat)) ||
+          (targetCat === "deity-prints" && prodCat.includes("deity")) ||
+          (targetCat === "temple-prints" && prodCat.includes("temple")) ||
+          (targetCat === "sculpture-prints" && prodCat.includes("sculpture")) ||
+          (targetCat === "premium-sets" && prodCat.includes("set"));
 
         const query = search.trim().toLowerCase();
         const matchesSearch =
           !query ||
           product.name.toLowerCase().includes(query) ||
           product.description.toLowerCase().includes(query) ||
-          product.category.toLowerCase().includes(query);
+          product.category.toLowerCase().includes(query) ||
+          (product.badge && product.badge.toLowerCase().includes(query));
 
         return matchesCategory && matchesSearch;
       })
@@ -62,7 +99,7 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
         if (sortBy === "name") return a.name.localeCompare(b.name);
         return 0; // featured/original order
       });
-  }, [initialProducts, search, selectedCategory, sortBy]);
+  }, [effectiveProducts, search, selectedCategory, sortBy]);
 
   return (
     <div className="space-y-8">
@@ -81,17 +118,19 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
             />
           </div>
 
-          {/* Sort Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider text-grey-stone font-bold whitespace-nowrap">
-              Sort By:
-            </span>
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-grey-stone" />
+            <label htmlFor="sort-select" className="text-xs text-grey-stone uppercase tracking-wider font-semibold">
+              Sort:
+            </label>
             <select
+              id="sort-select"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              onChange={(e) => setSortBy(e.target.value as any)}
               className="bg-white-pure border border-black-deep/20 py-2.5 px-3 text-xs text-black-deep font-semibold focus:border-black-deep focus:outline-none transition-colors cursor-pointer"
             >
-              <option value="featured">Featured Sacred Art</option>
+              <option value="featured">Featured First</option>
               <option value="price-asc">Price: Low to High</option>
               <option value="price-desc">Price: High to Low</option>
               <option value="name">Deity Name (A-Z)</option>
@@ -110,9 +149,9 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
                 : "bg-white-pure text-black-deep border-black-deep/20 hover:border-black-deep/40"
             }`}
           >
-            All Paintings ({initialProducts.length})
+            All Paintings ({effectiveProducts.length})
           </button>
-          {categories.map((cat) => (
+          {combinedCategories.map((cat) => (
             <button
               key={cat.slug}
               type="button"
@@ -134,38 +173,32 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
         <p>
           Showing <span className="font-bold text-black-deep">{filteredAndSorted.length}</span> sacred devotional paintings
         </p>
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch("")}
-            className="text-[11px] underline uppercase tracking-wider text-black-deep"
-          >
-            Clear Search
-          </button>
-        )}
-      </div>
-
-      {/* Product Grid */}
-      {filteredAndSorted.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-black-deep/20 p-8 bg-white-ivory/30">
-          <Sparkles className="w-8 h-8 text-[#c9a227] mx-auto mb-3" />
-          <h3 className="font-serif text-xl uppercase text-black-deep">No devotional paintings found</h3>
-          <p className="text-xs text-grey-stone mt-1 max-w-sm mx-auto">
-            Try adjusting your search keywords or browsing all categories.
-          </p>
+        {(search || selectedCategory !== "all" || sortBy !== "featured") && (
           <button
             type="button"
             onClick={() => {
               setSearch("");
               setSelectedCategory("all");
+              setSortBy("featured");
             }}
-            className="mt-4 px-5 py-2.5 bg-black-deep text-white text-xs uppercase tracking-widest font-bold hover:bg-black-charcoal transition-colors"
+            className="text-[11px] underline uppercase tracking-wider text-black-deep"
           >
             Reset Filters
           </button>
+        )}
+      </div>
+
+      {/* Product Cards Grid */}
+      {filteredAndSorted.length === 0 ? (
+        <div className="py-20 text-center border border-black-deep/10 bg-white-pure p-8">
+          <Sparkles className="mx-auto h-8 w-8 text-[#c9a227] mb-3" />
+          <h3 className="font-serif text-xl uppercase text-black-deep">No devotional paintings found</h3>
+          <p className="mt-2 text-xs text-black-charcoal/70 max-w-md mx-auto">
+            Try adjusting your search query or selecting a different category above.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
           {filteredAndSorted.map((product) => (
             <DevotionalProductCard key={product.id} product={product} />
           ))}
