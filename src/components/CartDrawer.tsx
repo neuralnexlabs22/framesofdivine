@@ -223,7 +223,7 @@ export default function CartDrawer() {
               );
             }
           } catch (verErr) {
-            console.error("Payment verification network error:", verErr);
+            console.warn("Payment verification network note:", verErr);
             alert("Payment processed. Your order will be confirmed shortly via our secure webhook.");
           } finally {
             setOrderSubmitting(false);
@@ -233,8 +233,13 @@ export default function CartDrawer() {
 
       const razorpayInstance = new (window as any).Razorpay(options);
       razorpayInstance.on("payment.failed", function (failResponse: any) {
-        console.error("Payment failure:", failResponse.error);
-        alert(`Payment failed: ${failResponse.error?.description || "Transaction was declined."}`);
+        const errorDetails = failResponse?.error;
+        console.warn("Razorpay payment notice:", errorDetails || failResponse);
+        const reason =
+          errorDetails?.description ||
+          errorDetails?.reason ||
+          "Payment could not be completed or was cancelled.";
+        alert(`Payment notice: ${reason}`);
         setOrderSubmitting(false);
       });
       razorpayInstance.open();
