@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRazorpayClient, verifyRazorpaySignature } from "@/lib/razorpay";
 import { supabaseQuery } from "@/lib/supabaseDb";
+import { triggerOrderPaidWhatsAppNotification } from "@/lib/whatsappNotification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -156,6 +157,16 @@ export async function POST(req: NextRequest) {
         },
         useServiceRole: true,
       });
+
+      // 11. Trigger automated WhatsApp Order Notification to Administrator
+      try {
+        await triggerOrderPaidWhatsAppNotification(internalId, {
+          razorpay_payment_id,
+          razorpay_order_id: serverOrderId,
+        });
+      } catch (notifErr) {
+        console.warn("WhatsApp notification trigger note:", notifErr);
+      }
 
       // Record coupon usage if applicable
       try {

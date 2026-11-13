@@ -132,6 +132,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     customer_email TEXT,
     items JSONB,
     shipping_address JSONB,
+    whatsapp_notification_sent BOOLEAN DEFAULT false,
+    whatsapp_notified_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

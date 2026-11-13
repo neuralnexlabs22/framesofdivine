@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRazorpayWebhookSignature } from "@/lib/razorpay";
 import { supabaseQuery } from "@/lib/supabaseDb";
+import { triggerOrderPaidWhatsAppNotification } from "@/lib/whatsappNotification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,6 +125,16 @@ export async function POST(req: NextRequest) {
             },
             useServiceRole: true,
           });
+
+          // Trigger automated WhatsApp Order Notification to Administrator
+          try {
+            await triggerOrderPaidWhatsAppNotification(order.id, {
+              razorpay_payment_id: rzpPaymentId || order.razorpay_payment_id,
+              razorpay_order_id: rzpOrderId,
+            });
+          } catch (notifErr) {
+            console.warn("Webhook WhatsApp notification trigger note:", notifErr);
+          }
         }
       } else if (eventType === "payment.failed") {
         if (order && order.payment_status !== "captured") {

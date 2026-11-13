@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   Truck,
   IndianRupee,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 
 export interface OrderRecord {
@@ -45,6 +47,37 @@ export default function AdminOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [notifyingWhatsApp, setNotifyingWhatsApp] = useState(false);
+  const [whatsAppNotice, setWhatsAppNotice] = useState<string | null>(null);
+
+  const handleTriggerWhatsApp = async (orderId: string) => {
+    try {
+      setNotifyingWhatsApp(true);
+      setWhatsAppNotice(null);
+      const res = await fetch("/api/admin/orders/notify-whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setWhatsAppNotice(`❌ ${data.error || "Failed to dispatch alert"}`);
+      } else if (data.skipped) {
+        setWhatsAppNotice(`ℹ️ Notification was already sent for this order`);
+      } else if (data.provider === "meta_cloud_api") {
+        setWhatsAppNotice(`✅ Sent to Admin WhatsApp via Meta Cloud API`);
+      } else if (data.provider === "twilio") {
+        setWhatsAppNotice(`✅ Sent to Admin WhatsApp via Twilio`);
+      } else {
+        setWhatsAppNotice(`ℹ️ Notification generated & logged on server (Pending provider API token)`);
+      }
+      fetchOrders();
+    } catch (err: any) {
+      setWhatsAppNotice(`❌ Network error: ${err?.message}`);
+    } finally {
+      setNotifyingWhatsApp(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -514,6 +547,41 @@ export default function AdminOrdersPage() {
                 </div>
               );
             })()}
+
+            {/* WhatsApp Notification Status & Manual Trigger */}
+            <div className="bg-[#25D366]/5 border border-[#25D366]/20 rounded-2xl p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-[#25D366]/20 flex items-center justify-center text-[#25D366] flex-shrink-0">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-xs uppercase tracking-wider">
+                      Admin WhatsApp Notification
+                    </h3>
+                    <p className="text-[11px] text-zinc-400">
+                      Automated order dispatch alert to administrator hotline
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleTriggerWhatsApp(selectedOrder.id)}
+                  disabled={notifyingWhatsApp}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-xs font-bold text-black hover:bg-[#1ebe5b] transition-all disabled:opacity-50 flex-shrink-0"
+                >
+                  <Send className={`h-3.5 w-3.5 ${notifyingWhatsApp ? "animate-spin" : ""}`} />
+                  {notifyingWhatsApp ? "Sending..." : "Resend WhatsApp Alert"}
+                </button>
+              </div>
+
+              {whatsAppNotice && (
+                <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-xs font-medium text-zinc-200">
+                  {whatsAppNotice}
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-end pt-2">
               <button
