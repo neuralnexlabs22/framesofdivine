@@ -100,8 +100,84 @@ function saveCatalog(catalog: CatalogData): void {
   }
 }
 
+function categoryNameToSlug(name: string): string {
+  const map: Record<string, string> = {
+    "Deity Paintings": "deity-prints",
+    "Temple Paintings": "temple-prints",
+    "Sculpture Paintings": "sculpture-prints",
+    "Premium Sets": "premium-sets",
+  };
+  return map[name] || slugifyName(name);
+}
+
+function categorySlugToName(slug: string): string {
+  const map: Record<string, string> = {
+    "deity-prints": "Deity Paintings",
+    "temple-prints": "Temple Paintings",
+    "sculpture-prints": "Sculpture Paintings",
+    "premium-sets": "Premium Sets",
+  };
+  return map[slug] || slug;
+}
+
 export async function loadCatalog(force = false): Promise<CatalogData> {
   if (memoryCache && !force) return memoryCache;
+
+  if (typeof window !== "undefined") {
+    try {
+      const [catRes, brandRes] = await Promise.all([
+        fetch("/api/categories", { cache: "no-store" }),
+        fetch("/api/brands", { cache: "no-store" }),
+      ]);
+      if (catRes.ok && brandRes.ok) {
+        const catJson = await catRes.json();
+        const brandJson = await brandRes.json();
+
+        if (Array.isArray(catJson.categories) && catJson.categories.length > 0) {
+          const categories: Category[] = catJson.categories.map((c: any) => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            description: c.description || "",
+            image: c.image_url || "",
+            icon: "",
+            display_order: c.display_order ?? 0,
+            is_active: true,
+            created_at: c.created_at,
+            updated_at: c.created_at,
+          }));
+
+          const brands: Brand[] = Array.isArray(brandJson.brands)
+            ? brandJson.brands.map((b: any) => {
+                const categorySlug =
+                  categoryNameToSlug(b.category_name) || "deity-prints";
+                return {
+                  id: b.id,
+                  category_id: categorySlug,
+                  name: b.name,
+                  slug: b.slug,
+                  logo: b.logo_url || "",
+                  banner: "",
+                  description: b.description || "",
+                  display_order: 0,
+                  is_active: true,
+                  featured: true,
+                  created_at: b.created_at,
+                  updated_at: b.created_at,
+                };
+              })
+            : [];
+
+          const remoteData: CatalogData = { categories, brands };
+          saveCatalog(remoteData);
+          return remoteData;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch remote catalog, falling back to local:", e);
+    }
+  }
+
   memoryCache = readCatalog();
   return memoryCache;
 }
@@ -148,6 +224,26 @@ export async function addCategory(
 
   const now = new Date().toISOString();
   const category: Category = { ...data, id: data.slug, created_at: now, updated_at: now };
+
+  if (typeof window !== "undefined") {
+    try {
+      await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          description: category.description,
+          display_order: category.display_order,
+          image_url: category.image,
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to persist category to Supabase:", e);
+    }
+  }
+
   saveCatalog({ ...catalog, categories: [...catalog.categories, category] });
   return category;
 }
@@ -162,6 +258,24 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
     throw new Error("A category with this URL slug already exists");
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/categories/${encodeURIComponent(existing.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: updated.name,
+          slug: updated.slug,
+          description: updated.description,
+          display_order: updated.display_order,
+          image_url: updated.image,
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to patch category in Supabase:", e);
+    }
+  }
+
   const categories = catalog.categories.map((category) => category.id === existing.id ? updated : category);
   const brands = catalog.brands.map((brand) =>
     brand.category_id === existing.slug ? { ...brand, category_id: updated.slug } : brand
@@ -173,6 +287,17 @@ export async function deleteCategory(id: string): Promise<void> {
   const catalog = getCatalogSync();
   const category = catalog.categories.find((entry) => entry.id === id || entry.slug === id);
   if (!category) throw new Error("Category not found");
+
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/categories/${encodeURIComponent(category.id)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("Failed to delete category in Supabase:", e);
+    }
+  }
+
   saveCatalog({
     categories: catalog.categories.filter((entry) => entry.id !== category.id),
     brands: catalog.brands.filter((brand) => brand.category_id !== category.slug),
@@ -200,9 +325,26 @@ export async function addBrand(
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  if (catalog.brands.some((entry) => entry.id === brand.id)) {
-    throw new Error("This brand already exists in the selected category");
+
+  if (typeof window !== "undefined") {
+    try {
+      await fetch("/api/brands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug,
+          category_name: categorySlugToName(brand.category_id),
+          description: brand.description,
+          logo_url: brand.logo,
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to persist brand to Supabase:", e);
+    }
   }
+
   saveCatalog({ ...catalog, brands: [...catalog.brands, brand] });
   return brand;
 }
@@ -213,22 +355,42 @@ export async function updateBrand(id: string, updates: Partial<Brand>): Promise<
   if (!existing) throw new Error("Brand not found");
 
   const updated = { ...existing, ...updates, updated_at: new Date().toISOString() };
-  if (!catalog.categories.some((category) => category.slug === updated.category_id)) {
-    throw new Error(`Category "${updated.category_id}" not found`);
+
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/brands/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: updated.name,
+          slug: updated.slug,
+          category_name: categorySlugToName(updated.category_id),
+          description: updated.description,
+          logo_url: updated.logo,
+        }),
+      });
+    } catch (e) {
+      console.warn("Failed to patch brand in Supabase:", e);
+    }
   }
-  updated.id = buildBrandId(updated.category_id, updated.name);
-  if (catalog.brands.some((brand) => brand.id !== id && brand.id === updated.id)) {
-    throw new Error("This brand already exists in the selected category");
-  }
+
   saveCatalog({
     ...catalog,
-    brands: catalog.brands.map((brand) => brand.id === id ? updated : brand),
+    brands: catalog.brands.map((brand) => (brand.id === id ? updated : brand)),
   });
 }
 
 export async function deleteBrand(id: string): Promise<void> {
   const catalog = getCatalogSync();
-  if (!catalog.brands.some((brand) => brand.id === id)) throw new Error("Brand not found");
+  if (typeof window !== "undefined") {
+    try {
+      await fetch(`/api/brands/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("Failed to delete brand from Supabase:", e);
+    }
+  }
   saveCatalog({ ...catalog, brands: catalog.brands.filter((brand) => brand.id !== id) });
 }
 

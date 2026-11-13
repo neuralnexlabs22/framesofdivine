@@ -39,9 +39,13 @@ CREATE TABLE IF NOT EXISTS public.categories (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Migration for extra columns if table already exists
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON public.categories (slug);
 
--- 3. BRANDS / COLLECTIONS TABLE
+-- 3. BRANDS / DEITIES & THEMES TABLE
 CREATE TABLE IF NOT EXISTS public.brands (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -51,6 +55,10 @@ CREATE TABLE IF NOT EXISTS public.brands (
     logo_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Migration for extra columns if table already exists
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS category_name TEXT;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_brands_slug ON public.brands (slug);
 
@@ -94,7 +102,7 @@ CREATE TABLE IF NOT EXISTS public.coupon_usages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_coupon_usages_coupon_id ON public.coupon_usages (coupon_id);
-CREATE INDEX IF NOT EXISTS idx_coupon_usages_code ON public.coupon_usages (code);
+CREATE INDEX IF NOT EXISTS idx_coupon_usages_code ON public.coupon_usages (coupon_code);
 
 -- 6. CUSTOMER REVIEWS TABLE
 CREATE TABLE IF NOT EXISTS public.customer_reviews (
@@ -114,7 +122,7 @@ CREATE TABLE IF NOT EXISTS public.customer_reviews (
 
 CREATE INDEX IF NOT EXISTS idx_reviews_published ON public.customer_reviews (is_published, display_order);
 
--- 7. ORDERS TABLE (Includes Razorpay & Delivery fields)
+-- 7. ORDERS TABLE (Includes Razorpay & WhatsApp alert tracking)
 CREATE TABLE IF NOT EXISTS public.orders (
     id TEXT PRIMARY KEY,
     total_amount NUMERIC NOT NULL,
@@ -137,6 +145,10 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Migration for extra columns if table already exists
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS whatsapp_notification_sent BOOLEAN DEFAULT false;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS whatsapp_notified_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON public.orders (payment_status);
@@ -201,6 +213,46 @@ CREATE TABLE IF NOT EXISTS public.custom_enquiries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON public.custom_enquiries (status);
+
+-- ============================================================
+-- SEED INITIAL DATA (CATEGORIES & DEITIES/BRANDS)
+-- ============================================================
+
+INSERT INTO public.categories (id, slug, name, description, display_order)
+VALUES
+    ('cat-deity-prints', 'deity-prints', 'Deity Paintings', 'Premium framed and unframed Hindu deity Tanjore paintings', 1),
+    ('cat-temple-prints', 'temple-prints', 'Temple Paintings', 'Sacred temple gopuram, corridor, and architecture artwork', 2),
+    ('cat-sculpture-prints', 'sculpture-prints', 'Sculpture Paintings', 'Yali pillars, bronze icons, and sacred carving studies', 3),
+    ('cat-premium-sets', 'premium-sets', 'Premium Sets', 'Curated devotional photo sets for pooja rooms and gifting', 4)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    display_order = EXCLUDED.display_order;
+
+INSERT INTO public.brands (id, name, slug, category_name, description)
+VALUES
+    ('b-shiva-nataraja', 'Lord Shiva Nataraja', 'lord-shiva-nataraja', 'Deity Paintings', 'The cosmic dancer of time, rhythm, and renewal'),
+    ('b-murugan', 'Lord Murugan', 'lord-murugan', 'Deity Paintings', 'Radiant divine deity of wisdom, courage, and the sacred Vel'),
+    ('b-ganesha', 'Lord Ganesha', 'lord-ganesha', 'Deity Paintings', 'Remover of obstacles and lord of auspicious beginnings'),
+    ('b-meenakshi', 'Goddess Meenakshi', 'goddess-meenakshi', 'Deity Paintings', 'Divine queen and mother deity of Madurai'),
+    ('b-venkateswara', 'Lord Venkateswara', 'lord-venkateswara', 'Deity Paintings', 'Supreme protector and radiant manifestation of Vishnu'),
+    ('b-mahalakshmi', 'Goddess Mahalakshmi', 'goddess-mahalakshmi', 'Deity Paintings', 'Goddess of wealth, grace, light, and prosperity'),
+    ('b-dakshinamurthy', 'Lord Dakshinamurthy', 'lord-dakshinamurthy', 'Deity Paintings', 'Silent teacher of cosmic knowledge under the banyan tree'),
+    ('b-bhairava', 'Bhairava', 'bhairava', 'Deity Paintings', 'Fierce protector of temples, cosmic time, and sacred space'),
+    ('b-brihadisvara', 'Thanjavur Brihadisvara', 'thanjavur-brihadisvara', 'Temple Paintings', 'Great Living Chola temple architecture & Vimana majesty'),
+    ('b-madurai-meenakshi', 'Madurai Meenakshi Amman', 'madurai-meenakshi-amman', 'Temple Paintings', 'Celebrated thousand-pillared halls and soaring gopurams'),
+    ('b-rameswaram', 'Rameswaram Ramanathaswamy', 'rameswaram-ramanathaswamy', 'Temple Paintings', 'Historic long sculpted corridors of sacred coastal sanctuary'),
+    ('b-chidambaram', 'Chidambaram Nataraja', 'chidambaram-nataraja', 'Temple Paintings', 'The golden roof shrine of cosmic akasha and divine dance'),
+    ('b-chola-bronzes', 'Chola Bronzes', 'chola-bronzes', 'Sculpture Paintings', 'Lost-wax cast bronze icons with divine fluidity and elegance'),
+    ('b-yali-pillars', 'Yali Stone Pillars', 'yali-stone-pillars', 'Sculpture Paintings', 'Mythical guardian lions carved from massive monolithic granite'),
+    ('b-sacred-reliefs', 'Sacred Reliefs', 'sacred-reliefs', 'Sculpture Paintings', 'Intricate granite reliefs of celestial dancers and sacred lore'),
+    ('b-pooja-sanctum-set', 'Pooja Room Sanctum Set', 'pooja-room-sanctum-set', 'Premium Sets', 'Complete five-piece framed devotional gallery for pooja rooms'),
+    ('b-dravidian-heritage', 'Dravidian Heritage Series', 'dravidian-heritage-series', 'Premium Sets', 'Curated fine art archival collection of sacred temple corridors'),
+    ('b-festival-gifting', 'Festival & Gifting Edits', 'festival-gifting-edits', 'Premium Sets', 'Gold-accented devotional paintings suited for housewarmings and gifts')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    category_name = EXCLUDED.category_name,
+    description = EXCLUDED.description;
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
