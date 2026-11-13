@@ -137,4 +137,14 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 
 export async function deleteProduct(id: string): Promise<void> {
   saveProducts(getProductsSync().filter((product) => product.id !== id));
+  try {
+    const { supabaseQuery } = await import("@/lib/supabaseDb");
+    await supabaseQuery("products", {
+      method: "DELETE",
+      query: `id=eq.${encodeURIComponent(id)}`,
+      useServiceRole: true,
+    });
+  } catch {
+    // Local storage is primary fallback, ignore DB error if table not yet created
+  }
 }

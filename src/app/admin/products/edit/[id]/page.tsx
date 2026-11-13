@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, KeyboardEvent, FormEvent, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, X, Save, AlertCircle, Loader, Upload, Plus } from "lucide-react";
+import { ArrowLeft, X, Save, AlertCircle, Loader, Upload, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useProducts } from "@/context/ProductContext";
@@ -50,12 +50,14 @@ export default function EditProductPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { getProductById, updateProduct, loaded: productsLoaded } = useProducts();
+  const { getProductById, updateProduct, deleteProduct, loaded: productsLoaded } = useProducts();
   const { brands: catalogBrands, loading: catalogLoading } = useCatalog();
 
   const [loaded, setLoaded] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [name, setName] = useState("");
   const [brand, setBrand] = useState("");
@@ -229,6 +231,18 @@ export default function EditProductPage({
     return result;
   };
 
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      await deleteProduct(id);
+      router.push("/admin/products");
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete product");
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -307,24 +321,34 @@ export default function EditProductPage({
       className="max-w-3xl mx-auto space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/products"
-          className="p-2 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#c9a227]">
-            Frames of Divine
-          </span>
-          <h1 className="text-2xl md:text-3xl font-serif font-medium uppercase tracking-tight text-white mt-0.5">
-            Edit Devotional Print
-          </h1>
-          <p className="text-zinc-400 text-sm mt-0.5">
-            Update deity print details, pricing, dimensions, and framing options
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/products"
+            className="p-2 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-all"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#c9a227]">
+              Frames of Divine
+            </span>
+            <h1 className="text-2xl md:text-3xl font-serif font-medium uppercase tracking-tight text-white mt-0.5">
+              Edit Devotional Print
+            </h1>
+            <p className="text-zinc-400 text-sm mt-0.5">
+              Update deity print details, pricing, dimensions, and framing options
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all flex-shrink-0"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Delete Artwork</span>
+        </button>
       </div>
 
       {/* Form */}
@@ -674,21 +698,60 @@ export default function EditProductPage({
           </div>
         )}
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            "Saving..."
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Changes
-            </>
-          )}
-        </button>
+        {/* Delete Confirmation Box */}
+        {showDeleteConfirm && (
+          <div className="rounded-2xl p-4 bg-red-950/40 border border-red-500/30 text-white space-y-3">
+            <p className="text-sm font-semibold text-red-300">
+              Are you sure you want to permanently delete this artwork? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white transition-all disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Yes, Delete Permanently"}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-300 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={saving || deleting}
+            className="sm:w-1/3 flex items-center justify-center gap-2 border border-red-500/30 bg-red-500/10 text-red-400 font-bold uppercase tracking-wider text-xs px-6 py-4 rounded-xl hover:bg-red-500/20 transition-all disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Artwork
+          </button>
+
+          <button
+            type="submit"
+            disabled={saving || deleting}
+            className="flex-1 flex items-center justify-center gap-2 bg-[var(--accent-1)] text-black font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#c9a227]/20"
+          >
+            {saving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
       </form>
     </motion.div>
   );

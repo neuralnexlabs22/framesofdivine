@@ -3,7 +3,58 @@
 -- Paste this entire script into your Supabase SQL Editor and click "Run"
 -- ============================================================
 
--- 1. DISCOUNT COUPONS TABLE
+-- 1. PRODUCTS TABLE (Artworks & Devotional Prints)
+CREATE TABLE IF NOT EXISTS public.products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE,
+    brand TEXT NOT NULL DEFAULT 'Frames of Divine',
+    price NUMERIC NOT NULL CHECK (price >= 0),
+    original_price NUMERIC,
+    category TEXT NOT NULL CHECK (category IN ('Deity Paintings', 'Temple Paintings', 'Sculpture Paintings', 'Premium Sets')),
+    images JSONB DEFAULT '[]'::jsonb,
+    description TEXT,
+    stock INTEGER DEFAULT 10,
+    colors JSONB DEFAULT '[]'::jsonb,
+    sizes JSONB DEFAULT '[]'::jsonb,
+    is_new BOOLEAN DEFAULT false,
+    is_trending BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products (category);
+CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products (slug);
+CREATE INDEX IF NOT EXISTS idx_products_is_new ON public.products (is_new);
+CREATE INDEX IF NOT EXISTS idx_products_is_trending ON public.products (is_trending);
+
+-- 2. CATEGORIES TABLE
+CREATE TABLE IF NOT EXISTS public.categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT,
+    image_url TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON public.categories (slug);
+
+-- 3. BRANDS / COLLECTIONS TABLE
+CREATE TABLE IF NOT EXISTS public.brands (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    category_name TEXT,
+    description TEXT,
+    logo_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_brands_slug ON public.brands (slug);
+
+-- 4. DISCOUNT COUPONS TABLE
 CREATE TABLE IF NOT EXISTS public.discount_coupons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT NOT NULL UNIQUE,
@@ -28,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.discount_coupons (
 CREATE INDEX IF NOT EXISTS idx_coupons_code ON public.discount_coupons (code);
 CREATE INDEX IF NOT EXISTS idx_coupons_active ON public.discount_coupons (is_active);
 
--- 2. COUPON USAGES TABLE
+-- 5. COUPON USAGES TABLE
 CREATE TABLE IF NOT EXISTS public.coupon_usages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     coupon_id UUID REFERENCES public.discount_coupons(id) ON DELETE SET NULL,
@@ -43,9 +94,9 @@ CREATE TABLE IF NOT EXISTS public.coupon_usages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_coupon_usages_coupon_id ON public.coupon_usages (coupon_id);
-CREATE INDEX IF NOT EXISTS idx_coupon_usages_code ON public.coupon_usages (coupon_code);
+CREATE INDEX IF NOT EXISTS idx_coupon_usages_code ON public.coupon_usages (code);
 
--- 3. CUSTOMER REVIEWS TABLE
+-- 6. CUSTOMER REVIEWS TABLE
 CREATE TABLE IF NOT EXISTS public.customer_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_name TEXT NOT NULL,
@@ -63,7 +114,7 @@ CREATE TABLE IF NOT EXISTS public.customer_reviews (
 
 CREATE INDEX IF NOT EXISTS idx_reviews_published ON public.customer_reviews (is_published, display_order);
 
--- 4. ORDERS TABLE (Includes Razorpay & WhatsApp fields)
+-- 7. ORDERS TABLE (Includes Razorpay & Delivery fields)
 CREATE TABLE IF NOT EXISTS public.orders (
     id TEXT PRIMARY KEY,
     total_amount NUMERIC NOT NULL,
@@ -72,7 +123,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
     currency TEXT NOT NULL DEFAULT 'INR',
     status TEXT NOT NULL DEFAULT 'pending',
     payment_status TEXT NOT NULL DEFAULT 'pending',
-    payment_method TEXT NOT NULL DEFAULT 'whatsapp',
+    payment_method TEXT NOT NULL DEFAULT 'razorpay',
     fulfillment_status TEXT NOT NULL DEFAULT 'pending',
     razorpay_order_id TEXT UNIQUE,
     razorpay_payment_id TEXT,
@@ -90,7 +141,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON public.orders (payment_s
 CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON public.orders (razorpay_order_id);
 CREATE INDEX IF NOT EXISTS idx_orders_razorpay_payment_id ON public.orders (razorpay_payment_id);
 
--- 5. PAYMENT TRANSACTIONS TABLE
+-- 8. PAYMENT TRANSACTIONS TABLE
 CREATE TABLE IF NOT EXISTS public.payment_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     internal_order_id TEXT NOT NULL,
@@ -110,7 +161,7 @@ CREATE TABLE IF NOT EXISTS public.payment_records (
 CREATE INDEX IF NOT EXISTS idx_payment_records_order ON public.payment_records (internal_order_id);
 CREATE INDEX IF NOT EXISTS idx_payment_records_rzp_order ON public.payment_records (razorpay_order_id);
 
--- 6. WEBHOOK DEDUPLICATION TABLE
+-- 9. WEBHOOK DEDUPLICATION TABLE
 CREATE TABLE IF NOT EXISTS public.razorpay_webhook_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id TEXT NOT NULL UNIQUE,
@@ -125,14 +176,14 @@ CREATE TABLE IF NOT EXISTS public.razorpay_webhook_events (
 
 CREATE INDEX IF NOT EXISTS idx_webhook_event_id ON public.razorpay_webhook_events (event_id);
 
--- 7. SITE SETTINGS & CONTENT TABLE
+-- 10. SITE SETTINGS & ANALYTICS TABLE
 CREATE TABLE IF NOT EXISTS public.site_settings (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 8. CUSTOM DEVOTIONAL ENQUIRIES TABLE
+-- 11. CUSTOM DEVOTIONAL ENQUIRIES TABLE
 CREATE TABLE IF NOT EXISTS public.custom_enquiries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_name TEXT NOT NULL,
@@ -149,7 +200,13 @@ CREATE TABLE IF NOT EXISTS public.custom_enquiries (
 
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON public.custom_enquiries (status);
 
--- 9. ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================================
+
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discount_coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupon_usages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customer_reviews ENABLE ROW LEVEL SECURITY;
@@ -159,8 +216,17 @@ ALTER TABLE public.razorpay_webhook_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.custom_enquiries ENABLE ROW LEVEL SECURITY;
 
--- Allow public read on active coupons
 DO $$ BEGIN
+    -- Public read policies
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read products') THEN
+        CREATE POLICY "Public read products" ON public.products FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read categories') THEN
+        CREATE POLICY "Public read categories" ON public.categories FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read brands') THEN
+        CREATE POLICY "Public read brands" ON public.brands FOR SELECT USING (true);
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read active coupons') THEN
         CREATE POLICY "Public read active coupons" ON public.discount_coupons FOR SELECT USING (is_active = true);
     END IF;
@@ -170,11 +236,27 @@ DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read site settings') THEN
         CREATE POLICY "Public read site settings" ON public.site_settings FOR SELECT USING (true);
     END IF;
+
+    -- Public insert policies
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public insert reviews') THEN
         CREATE POLICY "Public insert reviews" ON public.customer_reviews FOR INSERT WITH CHECK (true);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public insert enquiries') THEN
         CREATE POLICY "Public insert enquiries" ON public.custom_enquiries FOR INSERT WITH CHECK (true);
+    END IF;
+
+    -- Full Service Role Access Policies (for Admin & Webhooks)
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access products') THEN
+        CREATE POLICY "Service role full access products" ON public.products 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access categories') THEN
+        CREATE POLICY "Service role full access categories" ON public.categories 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access brands') THEN
+        CREATE POLICY "Service role full access brands" ON public.brands 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access orders') THEN
         CREATE POLICY "Service role full access orders" ON public.orders 
@@ -188,5 +270,24 @@ DO $$ BEGIN
         CREATE POLICY "Service role full access webhooks" ON public.razorpay_webhook_events 
             FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access coupons') THEN
+        CREATE POLICY "Service role full access coupons" ON public.discount_coupons 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access usages') THEN
+        CREATE POLICY "Service role full access usages" ON public.coupon_usages 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access reviews') THEN
+        CREATE POLICY "Service role full access reviews" ON public.customer_reviews 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access settings') THEN
+        CREATE POLICY "Service role full access settings" ON public.site_settings 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access enquiries') THEN
+        CREATE POLICY "Service role full access enquiries" ON public.custom_enquiries 
+            FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+    END IF;
 END $$;
-
