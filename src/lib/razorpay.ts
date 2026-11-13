@@ -112,10 +112,28 @@ export async function calculateAuthoritativeTotal(
     } else if (devotionalProd) {
       unitPrice = devotionalProd.price;
       productName = devotionalProd.name;
-    } else if (typeof item.price === "number" && item.price > 0) {
-      // Fallback for custom configured items, validating floor
-      unitPrice = Math.max(100, Math.round(item.price));
     } else {
+      // Look up in Supabase database products table (for items added via Admin panel)
+      try {
+        const { data: dbProducts } = await supabaseQuery<any[]>("products", {
+          query: `id=eq.${encodeURIComponent(item.id)}&limit=1`,
+          useServiceRole: true,
+        });
+        if (dbProducts && dbProducts.length > 0 && Number(dbProducts[0].price) > 0) {
+          unitPrice = Number(dbProducts[0].price);
+          productName = dbProducts[0].name || productName;
+        }
+      } catch (err) {
+        console.warn("Could not query product in Supabase:", err);
+      }
+    }
+
+    if (!unitPrice && typeof item.price === "number" && item.price > 0) {
+      // Fallback for custom configured items, minimum floor of ₹1 (100 paise)
+      unitPrice = Math.max(1, Math.round(item.price));
+    }
+
+    if (!unitPrice) {
       return {
         valid: false,
         error: `Product '${item.id || item.name}' is invalid or no longer available.`,
