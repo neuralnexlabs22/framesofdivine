@@ -109,7 +109,10 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
         firstImageUrl = item.image;
       }
 
-      itemsListText += `${index + 1}. *${itemName}*${optionsStr}\n   ↳ *Qty:* ${qty} × ₹${unitPrice.toLocaleString("en-IN")} = *₹${itemTotal.toLocaleString("en-IN")}*\n`;
+      const slug = item.slug || item.id;
+      const productLink = slug ? `\n   ↳ *Link:* https://framesofdivine.vercel.app/products/${slug}` : "";
+
+      itemsListText += `${index + 1}. *${itemName}*${optionsStr}\n   ↳ *Qty:* ${qty} × ₹${unitPrice.toLocaleString("en-IN")} = *₹${itemTotal.toLocaleString("en-IN")}*${productLink}\n`;
     });
   } else {
     itemsListText = "1. *Devotional Artwork Set* — 1 unit\n";

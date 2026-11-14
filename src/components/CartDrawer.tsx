@@ -69,6 +69,17 @@ export default function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    orderId: string;
+    items: typeof items;
+    subtotal: number;
+    discountAmount: number;
+    finalTotal: number;
+    customerName: string;
+    customerPhone: string;
+    customerAddress: string;
+    paymentMethod: "razorpay" | "cod";
+  } | null>(null);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,11 +93,14 @@ export default function CartDrawer() {
     // Format message
     const rawDigits = whatsappNumber.replace(/\D/g, "");
     const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://framesofdivine.vercel.app";
+
     const itemsList = items
-      .map(
-        (i, idx) =>
-          `${idx + 1}. *${i.name}*\n   Options: ${i.size || "Standard"} | ${i.frame || "22KT Gold Tanjore Painting"}\n   Qty: ${i.quantity} × ₹${i.price.toLocaleString("en-IN")}`
-      )
+      .map((i, idx) => {
+        const slug = i.slug || i.id;
+        const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
+        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+      })
       .join("\n\n");
 
     let message = `*🕉️ NEW ORDER REQUEST — FRAMES OF DIVINE*\n\n`;
@@ -98,16 +112,16 @@ export default function CartDrawer() {
       message += `*Coupon Applied:* ${appliedCoupon.code} (-₹${discountAmount.toLocaleString("en-IN")})\n`;
     }
     message += `*Final Amount:* ₹${finalTotal.toLocaleString("en-IN")}\n`;
-    message += `──────────────────\n`;
+    message += `──────────────────\n\n`;
 
     if (customerName || customerPhone || customerAddress) {
-      message += `*Delivery Details:*\n`;
-      if (customerName) message += `Name: ${customerName}\n`;
-      if (customerPhone) message += `Phone: ${customerPhone}\n`;
-      if (customerAddress) message += `Address: ${customerAddress}\n`;
+      message += `*📍 Delivery Details:*\n`;
+      if (customerName) message += `• Customer: ${customerName}\n`;
+      if (customerPhone) message += `• Phone: ${customerPhone}\n`;
+      if (customerAddress) message += `• Address: ${customerAddress}\n\n`;
     }
 
-    message += `\nPlease confirm availability and payment details. Thank you! 🙏`;
+    message += `Please confirm availability, framing finish, and dispatch timeline. Thank you! 🙏`;
 
     // Record order in background
     try {
@@ -215,6 +229,17 @@ export default function CartDrawer() {
 
             const verifyResult = await verifyRes.json();
             if (verifyRes.ok && verifyResult.success) {
+              setConfirmedOrder({
+                orderId: orderData.orderId,
+                items: [...items],
+                subtotal,
+                discountAmount,
+                finalTotal,
+                customerName: customerName.trim(),
+                customerPhone: customerPhone.trim(),
+                customerAddress: customerAddress.trim(),
+                paymentMethod: "razorpay",
+              });
               setOrderSuccess(orderData.orderId);
               clearCart();
             } else {
@@ -278,6 +303,17 @@ export default function CartDrawer() {
 
       const json = await res.json();
       if (res.ok) {
+        setConfirmedOrder({
+          orderId: json.order_id || "GOD-ORDER",
+          items: [...items],
+          subtotal,
+          discountAmount,
+          finalTotal,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerAddress: customerAddress.trim(),
+          paymentMethod: "cod",
+        });
         setOrderSuccess(json.order_id || "GOD-ORDER");
         clearCart();
       } else {
@@ -578,15 +614,68 @@ export default function CartDrawer() {
                 <p className="text-xs text-zinc-300">
                   Our team will contact you via WhatsApp to confirm framing details and dispatch timing.
                 </p>
+                {confirmedOrder && (
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left text-xs space-y-2 max-h-48 overflow-y-auto">
+                    <div className="flex justify-between items-center text-[#c9a227] font-bold border-b border-white/10 pb-2">
+                      <span>Total Paid: ₹{confirmedOrder.finalTotal.toLocaleString("en-IN")}</span>
+                      <span className="uppercase text-[10px] tracking-wider text-green-400">● {confirmedOrder.paymentMethod === "razorpay" ? "Captured" : "COD"}</span>
+                    </div>
+                    {confirmedOrder.items.map((it, idx) => (
+                      <div key={idx} className="flex justify-between text-zinc-300 pt-1">
+                        <div>
+                          <p className="font-semibold text-white">{it.name}</p>
+                          <p className="text-[10px] text-zinc-400">{it.size || "Standard"} • {it.frame || "Traditional Finish"}</p>
+                        </div>
+                        <p className="font-mono">₹{(Number(it.price) * it.quantity).toLocaleString("en-IN")}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex flex-col gap-2 pt-2">
                   {(() => {
                     const rawDigits = whatsappNumber.replace(/\D/g, "");
                     const targetPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+                    const order = confirmedOrder || {
+                      orderId: orderSuccess,
+                      items,
+                      subtotal,
+                      discountAmount,
+                      finalTotal,
+                      customerName: customerName.trim(),
+                      customerPhone: customerPhone.trim(),
+                      customerAddress: customerAddress.trim(),
+                      paymentMethod,
+                    };
+                    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://framesofdivine.vercel.app";
+
+                    const itemsText = (order.items && order.items.length > 0)
+                      ? order.items
+                          .map((i, idx) => {
+                            const slug = i.slug || i.id;
+                            const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
+                            return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Finish/Material: ${i.frame || "22KT Gold Tanjore Painting"}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+                          })
+                          .join("\n\n")
+                      : "Devotional Artwork Order";
+
+                    const msg =
+                      `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\n` +
+                      `*Order ID:* ${order.orderId}\n` +
+                      `*Payment Status:* ${order.paymentMethod === "razorpay" ? "Captured via Razorpay (Paid Online)" : "Cash on Delivery"}\n\n` +
+                      `*👤 Customer Details:*\n` +
+                      `• Name: ${order.customerName || "Devotee Customer"}\n` +
+                      `• Phone: ${order.customerPhone || "N/A"}\n` +
+                      `• Address: ${order.customerAddress || "N/A"}\n\n` +
+                      `*📦 Product Details:*\n` +
+                      `${itemsText}\n\n` +
+                      `──────────────────────\n` +
+                      `*Total Paid:* *₹${order.finalTotal.toLocaleString("en-IN")}*\n` +
+                      `──────────────────────\n\n` +
+                      `Hello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`;
+
                     return (
                       <a
-                        href={`https://wa.me/${targetPhone}?text=${encodeURIComponent(
-                          `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\nOrder ID: *${orderSuccess}*\nPayment Status: *Captured via Razorpay*\nCustomer: *${customerName.trim()}*\nPhone: *${customerPhone.trim()}*\nAddress: *${customerAddress.trim()}*\nTotal Paid: *₹${finalTotal.toLocaleString("en-IN")}*\n\nHello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`
-                        )}`}
+                        href={`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-xl hover:brightness-110 transition-all shadow-md"
@@ -600,6 +689,7 @@ export default function CartDrawer() {
                     onClick={() => {
                       setShowCheckoutModal(false);
                       setOrderSuccess(null);
+                      setConfirmedOrder(null);
                       closeCart();
                     }}
                     className="w-full bg-[#c9a227] text-black font-black uppercase tracking-widest text-xs px-6 py-3 rounded-xl hover:brightness-110 transition-all"

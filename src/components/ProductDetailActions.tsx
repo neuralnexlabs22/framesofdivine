@@ -117,6 +117,9 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
   const handleWhatsAppOrder = () => {
     const rawDigits = whatsappNumber.replace(/\D/g, "");
     const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://framesofdivine.vercel.app";
+    const productLink = `${baseUrl}/products/${product.slug || product.id}`;
+
     const msg = `*🕉️ ORDER INQUIRY — TANJORE PAINTINGS*\n\n` +
       `Product: *${product.name}*\n` +
       `Material / Framing: ${activeMaterial.label}${activeMaterial.priceDelta > 0 ? ` (+₹${activeMaterial.priceDelta.toLocaleString("en-IN")})` : ""}\n` +
@@ -124,6 +127,7 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
       `Quantity: ${quantity}\n` +
       `Calculated Unit Price: ₹${unitPrice.toLocaleString("en-IN")}\n` +
       `Total Amount: ₹${(unitPrice * quantity).toLocaleString("en-IN")}\n\n` +
+      `👉 View Artwork Link: ${productLink}\n\n` +
       `Please confirm availability, framing finish, and dispatch timeline. Thank you! 🙏`;
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
