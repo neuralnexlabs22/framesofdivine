@@ -84,7 +84,7 @@ export default function AdminEnquiriesPage() {
 
   const handleOpenWhatsApp = (enquiry: CustomEnquiry) => {
     const cleanPhone = enquiry.phone.replace(/[^0-9]/g, "");
-    const msg = `Namaste ${enquiry.customer_name}! 🕉️ Thank you for your custom devotional enquiry regarding "${enquiry.requested_deity}" on Frames of Divine. We would be delighted to assist you with framing, sizing, and pricing details.`;
+    const msg = `Namaste ${enquiry.customer_name}! Thank you for your custom devotional enquiry regarding "${enquiry.requested_deity}" on Frames of Divine. We would be delighted to assist you with framing, sizing, and pricing details.`;
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 

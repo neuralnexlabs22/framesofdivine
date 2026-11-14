@@ -92,7 +92,7 @@ export default function CustomOrderPage() {
   const handleSendViaWhatsApp = () => {
     const rawDigits = whatsappNumber.replace(/\D/g, "");
     const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
-    let msg = `*🕉️ CUSTOM DEVOTIONAL PHOTO ENQUIRY — FRAMES OF DIVINE*\n\n`;
+    let msg = `*CUSTOM DEVOTIONAL PHOTO ENQUIRY — FRAMES OF DIVINE*\n\n`;
     msg += `*Customer Name:* ${name.trim() || "Devotee"}\n`;
     msg += `*Contact Phone:* ${phone.trim()}\n`;
     if (email) msg += `*Email:* ${email.trim()}\n`;
@@ -101,7 +101,7 @@ export default function CustomOrderPage() {
     msg += `*Frame / Finish:* ${frame}\n`;
     if (details) msg += `*Customization Details:* ${details.trim()}\n`;
     if (notes) msg += `*Special Notes:* ${notes.trim()}\n`;
-    msg += `\nPlease guide me with customization options, framing styles, and pricing quote. Thank you! 🙏`;
+    msg += `\nPlease guide me with customization options, framing styles, and pricing quote. Thank you!`;
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };

@@ -98,13 +98,13 @@ export default function CartDrawer() {
     const itemsList = items
       .map((i, idx) => {
         const slug = i.slug || i.id;
-        const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
+        const link = slug ? `\n   Product Link: ${baseUrl}/products/${slug}` : "";
         const modelStr = i.frameModel ? `\n   Frame Model: ${i.frameModel}` : "";
         return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
       })
       .join("\n\n");
 
-    let message = `*🕉️ NEW ORDER REQUEST — FRAMES OF DIVINE*\n\n`;
+    let message = `*NEW ORDER REQUEST — FRAMES OF DIVINE*\n\n`;
     message += `Hello! I would like to order the following devotional paintings:\n\n`;
     message += `${itemsList}\n\n`;
     message += `──────────────────\n`;
@@ -116,13 +116,13 @@ export default function CartDrawer() {
     message += `──────────────────\n\n`;
 
     if (customerName || customerPhone || customerAddress) {
-      message += `*📍 Delivery Details:*\n`;
+      message += `*Delivery Details:*\n`;
       if (customerName) message += `• Customer: ${customerName}\n`;
       if (customerPhone) message += `• Phone: ${customerPhone}\n`;
       if (customerAddress) message += `• Address: ${customerAddress}\n\n`;
     }
 
-    message += `Please confirm availability, framing finish, and dispatch timeline. Thank you! 🙏`;
+    message += `Please confirm availability, framing finish, and dispatch timeline. Thank you!`;
 
     // Record order in background
     try {
@@ -648,7 +648,7 @@ export default function CartDrawer() {
                       ? order.items
                           .map((i, idx) => {
                             const slug = i.slug || i.id;
-                            const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
+                            const link = slug ? `\n   Product Link: ${baseUrl}/products/${slug}` : "";
                             const modelStr = i.frameModel ? `\n   Frame Model: ${i.frameModel}` : "";
                             return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Finish/Material: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
                           })
@@ -656,19 +656,19 @@ export default function CartDrawer() {
                       : "Devotional Artwork Order";
 
                     const msg =
-                      `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\n` +
+                      `*PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\n` +
                       `*Order ID:* ${order.orderId}\n` +
                       `*Payment Status:* ${order.paymentMethod === "razorpay" ? "Captured via Razorpay (Paid Online)" : "Cash on Delivery"}\n\n` +
-                      `*👤 Customer Details:*\n` +
+                      `*Customer Details:*\n` +
                       `• Name: ${order.customerName || "Devotee Customer"}\n` +
                       `• Phone: ${order.customerPhone || "N/A"}\n` +
                       `• Address: ${order.customerAddress || "N/A"}\n\n` +
-                      `*📦 Product Details:*\n` +
+                      `*Product Details:*\n` +
                       `${itemsText}\n\n` +
                       `──────────────────────\n` +
                       `*Total Paid:* *₹${order.finalTotal.toLocaleString("en-IN")}*\n` +
                       `──────────────────────\n\n` +
-                      `Hello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`;
+                      `Hello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you!`;
 
                     return (
                       <a

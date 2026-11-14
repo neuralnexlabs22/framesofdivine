@@ -121,26 +121,26 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
 
   // Compose complete message
   const lines: string[] = [
-    `🕉️ *NEW PAID ORDER RECEIVED — FRAMES OF DIVINE* 🕉️`,
+    `*NEW PAID ORDER RECEIVED — FRAMES OF DIVINE*`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `📦 *Order ID:* \`${order.id}\``,
-    `💳 *Payment Status:* Verified & Captured (Online)`,
-    `🆔 *Razorpay Order ID:* \`${razorpayOrderId}\``,
-    `🏷️ *Razorpay Payment Ref:* \`${paymentRef}\``,
-    `📅 *Order Time:* ${orderDate} IST`,
+    `*Order ID:* \`${order.id}\``,
+    `*Payment Status:* Verified & Captured (Online)`,
+    `*Razorpay Order ID:* \`${razorpayOrderId}\``,
+    `*Razorpay Payment Ref:* \`${paymentRef}\``,
+    `*Order Time:* ${orderDate} IST`,
     ``,
-    `👤 *CUSTOMER DETAILS:*`,
+    `*CUSTOMER DETAILS:*`,
     `• *Name:* ${customerName}`,
     `• *Mobile:* ${customerPhone}`,
     customerEmail ? `• *Email:* ${customerEmail}` : null,
     ``,
-    `📍 *DELIVERY ADDRESS:*`,
+    `*DELIVERY ADDRESS:*`,
     `${deliveryAddress}`,
     ``,
-    `🖼️ *ORDERED ITEMS (${items.length || 1}):*`,
+    `*ORDERED ITEMS (${items.length || 1}):*`,
     itemsListText.trimEnd(),
     ``,
-    `💰 *PAYMENT & BILLING SUMMARY:*`,
+    `*PAYMENT & BILLING SUMMARY:*`,
     `• *Item Subtotal:* ₹${subtotal.toLocaleString("en-IN")}`,
     discountAmount > 0
       ? `• *Coupon Discount:* -₹${discountAmount.toLocaleString("en-IN")} ${couponCode ? `(\`${couponCode}\`)` : ""}`
@@ -148,9 +148,9 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
     `• *Packaging & Shipping:* FREE (Insured Art Wooden Crate)`,
     `• *Taxes & GST:* Included in price`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `✨ *TOTAL AMOUNT PAID: ₹${finalAmount.toLocaleString("en-IN")}*`,
+    `*TOTAL AMOUNT PAID: ₹${finalAmount.toLocaleString("en-IN")}*`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `⚡ *Fulfillment Action:* Open Admin Dashboard to review order details and begin framing & sanctum dispatch.`,
+    `*Fulfillment Action:* Open Admin Dashboard to review order details and begin framing & sanctum dispatch.`,
   ].filter(Boolean) as string[];
 
   return {
