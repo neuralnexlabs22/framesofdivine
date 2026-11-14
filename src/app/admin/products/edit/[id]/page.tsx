@@ -116,6 +116,9 @@ export default function EditProductPage({
   const [frameModelInput, setFrameModelInput] = useState("");
   const [frameModelDeltaInput, setFrameModelDeltaInput] = useState("");
 
+  const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState("5-7 business days");
+  const [deliveryFee, setDeliveryFee] = useState("0");
+
   const [isNew, setIsNew] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
@@ -196,6 +199,13 @@ export default function EditProductPage({
     } else {
       setFrameModels(STANDARD_DEVOTIONAL_FRAME_MODELS);
     }
+
+    setEstimatedDeliveryDays(
+      (product as any).estimated_delivery_days ||
+        (product as any).estimatedDeliveryDays ||
+        "5-7 business days"
+    );
+    setDeliveryFee(String((product as any).delivery_fee ?? (product as any).deliveryFee ?? 0));
 
     setIsNew(Boolean(product.isNew));
     setIsTrending(Boolean(product.isTrending));
@@ -352,6 +362,10 @@ export default function EditProductPage({
         frame_models: frameModels,
         frameModels,
         frame_model: frameModels[0]?.label || undefined,
+        estimated_delivery_days: estimatedDeliveryDays.trim() || "5-7 business days",
+        estimatedDeliveryDays: estimatedDeliveryDays.trim() || "5-7 business days",
+        delivery_fee: Number(deliveryFee.replace(/[^\d.]/g, "")) || 0,
+        deliveryFee: Number(deliveryFee.replace(/[^\d.]/g, "")) || 0,
         isNew,
         isTrending,
       });
@@ -575,6 +589,39 @@ export default function EditProductPage({
             placeholder="10"
             className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
           />
+        </div>
+
+        {/* Delivery Timeline & Shipping Fee */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+              Estimated Delivery Days
+            </label>
+            <input
+              type="text"
+              value={estimatedDeliveryDays}
+              onChange={(e) => setEstimatedDeliveryDays(e.target.value)}
+              placeholder="e.g. 5-7 business days"
+              className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
+            />
+            <p className="text-[11px] text-zinc-500">Timeline shown on artwork page (e.g. 5-7 business days)</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+              Delivery Fee (₹)
+            </label>
+            <input
+              type="number"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(e.target.value)}
+              min="0"
+              step="1"
+              placeholder="0"
+              className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
+            />
+            <p className="text-[11px] text-zinc-500">Set 0 for Free Delivery, or custom shipping fee</p>
+          </div>
         </div>
 
         {/* Category (DYNAMIC DROPDOWN INCLUDING CUSTOM CATEGORIES) */}

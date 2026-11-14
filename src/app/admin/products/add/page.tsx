@@ -58,6 +58,8 @@ export default function AddProductPage() {
     categoryId: "",
     brandId: "",
     price: "",
+    estimatedDeliveryDays: "5-7 business days",
+    deliveryFee: "0",
     stockQuantity: "",
     stockStatus: "in_stock" as "in_stock" | "out_of_stock" | "low_stock",
     collectionType: "",
@@ -261,6 +263,10 @@ export default function AddProductPage() {
             : ["Teak Wood Frame", "Matte Gold Frame"],
         frame_models: frameModelsList,
         frame_model: frameModelsList[0]?.label || "Classic Teak Wood Frame",
+        estimated_delivery_days: formData.estimatedDeliveryDays.trim() || "5-7 business days",
+        estimatedDeliveryDays: formData.estimatedDeliveryDays.trim() || "5-7 business days",
+        delivery_fee: Number(formData.deliveryFee.replace(/[^\d.]/g, "")) || 0,
+        deliveryFee: Number(formData.deliveryFee.replace(/[^\d.]/g, "")) || 0,
         stock: parseInt(formData.stockQuantity) || 0,
         isNew: formData.featured,
         isTrending: formData.isTrending,
@@ -464,13 +470,13 @@ export default function AddProductPage() {
           </div>
         </div>
 
-        {/* Pricing */}
+        {/* Pricing & Delivery */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-white">Pricing</h3>
+          <h3 className="text-lg font-serif font-bold text-white">Pricing & Delivery</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium">
+              <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
                 Price (₹) *
               </label>
               <input
@@ -482,8 +488,40 @@ export default function AddProductPage() {
                 min="0"
                 step="0.01"
                 placeholder="9999"
-                className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[var(--accent-1)] focus:outline-none transition-colors"
+                className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+                Estimated Delivery Days
+              </label>
+              <input
+                type="text"
+                name="estimatedDeliveryDays"
+                value={formData.estimatedDeliveryDays}
+                onChange={handleInputChange}
+                placeholder="e.g. 5-7 business days"
+                className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
+              />
+              <p className="text-[11px] text-zinc-500">Timeline shown on artwork page (e.g. 5-7 business days)</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+                Delivery Fee (₹)
+              </label>
+              <input
+                type="number"
+                name="deliveryFee"
+                value={formData.deliveryFee}
+                onChange={handleInputChange}
+                min="0"
+                step="1"
+                placeholder="0"
+                className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
+              />
+              <p className="text-[11px] text-zinc-500">Set 0 for Free Delivery, or custom shipping fee</p>
             </div>
           </div>
         </div>

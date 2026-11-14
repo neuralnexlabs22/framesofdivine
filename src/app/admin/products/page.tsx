@@ -129,6 +129,9 @@ export default function AdminProductsPage() {
                   <th className="text-right px-5 py-4 text-xs uppercase tracking-wider text-zinc-400 font-semibold">
                     Price
                   </th>
+                  <th className="text-left px-5 py-4 text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+                    Delivery / Fee
+                  </th>
                   <th className="text-center px-5 py-4 text-xs uppercase tracking-wider text-zinc-400 font-semibold">
                     Frames/Sizes
                   </th>
@@ -182,6 +185,16 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-5 py-4 text-sm text-right font-semibold text-white">
                       {currency.format(product.price)}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-left">
+                      <div className="text-xs font-semibold text-zinc-200">
+                        {product.estimated_delivery_days || product.estimatedDeliveryDays || "5-7 business days"}
+                      </div>
+                      <div className="text-[11px] text-[#c9a227] font-medium">
+                        {Number(product.delivery_fee ?? product.deliveryFee ?? 0) > 0
+                          ? `₹${Number(product.delivery_fee ?? product.deliveryFee).toLocaleString("en-IN")} Fee`
+                          : "Free Delivery"}
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-center text-zinc-400">
                       {product.sizes?.length ? `${product.sizes.length} sizes` : "Standard"}
@@ -270,6 +283,14 @@ export default function AdminProductsPage() {
                         </span>
                       )}
                     </div>
+                    <p className="text-[11px] text-zinc-400 mt-1.5">
+                      🚚 {product.estimated_delivery_days || product.estimatedDeliveryDays || "5-7 business days"} ·{" "}
+                      <span className="text-[#c9a227] font-semibold">
+                        {Number(product.delivery_fee ?? product.deliveryFee ?? 0) > 0
+                          ? `₹${Number(product.delivery_fee ?? product.deliveryFee).toLocaleString("en-IN")} Fee`
+                          : "Free Delivery"}
+                      </span>
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">

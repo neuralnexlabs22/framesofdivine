@@ -51,6 +51,19 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
     }
   }
 
+  let estimatedDeliveryDays = row.estimated_delivery_days || "5-7 business days";
+  let deliveryFee = Number(row.delivery_fee || 0);
+  if (typeof row.description === "string") {
+    if (row.description.includes("<!--delivery_days:")) {
+      const match = row.description.match(/<!--delivery_days:(.*?)-->/);
+      if (match) estimatedDeliveryDays = match[1];
+    }
+    if (row.description.includes("<!--delivery_fee:")) {
+      const match = row.description.match(/<!--delivery_fee:(.*?)-->/);
+      if (match) deliveryFee = Number(match[1]) || 0;
+    }
+  }
+
   const firstSize = Array.isArray(row.sizes) && row.sizes[0]
     ? (typeof row.sizes[0] === "object" ? row.sizes[0].label : String(row.sizes[0]))
     : "12 x 18 in / 22KT Gold Tanjore";
@@ -79,6 +92,8 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
       ? row.colors
       : [],
     frame_models: frameModels,
+    estimated_delivery_days: estimatedDeliveryDays,
+    delivery_fee: deliveryFee,
   };
 }
 

@@ -573,15 +573,6 @@ export default function CartDrawer() {
                       <MessageSquare className="h-4 w-4 text-[#25D366]" />
                       Order via WhatsApp
                     </button>
-                    <button
-                      onClick={() => {
-                        setPaymentMethod("cod");
-                        setShowCheckoutModal(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl text-zinc-400 hover:text-white py-1.5 text-[11px] font-semibold tracking-wider hover:underline transition-all"
-                    >
-                      Cash on Delivery Available
-                    </button>
                   </div>
                 </div>
               </>

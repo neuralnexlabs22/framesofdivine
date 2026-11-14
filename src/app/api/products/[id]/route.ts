@@ -58,6 +58,12 @@ export async function PATCH(
     if (body.frame_model !== undefined || body.frameModel !== undefined) {
       updatePayload.frame_model = body.frame_model || body.frameModel;
     }
+    if (body.estimated_delivery_days !== undefined || body.estimatedDeliveryDays !== undefined) {
+      updatePayload.estimated_delivery_days = body.estimated_delivery_days || body.estimatedDeliveryDays;
+    }
+    if (body.delivery_fee !== undefined || body.deliveryFee !== undefined) {
+      updatePayload.delivery_fee = Number(body.delivery_fee ?? body.deliveryFee ?? 0);
+    }
     if (body.isNew !== undefined) updatePayload.is_new = Boolean(body.isNew);
     if (body.isTrending !== undefined) updatePayload.is_trending = Boolean(body.isTrending);
 
@@ -68,14 +74,35 @@ export async function PATCH(
       useServiceRole: true,
     });
 
-    if (error && typeof error === "string" && (error.includes("frame_models") || error.includes("frame_model"))) {
-      console.warn("Column frame_models not yet added in Supabase. Falling back to embedded description tag...");
+    if (
+      error &&
+      typeof error === "string" &&
+      (error.includes("frame_models") ||
+        error.includes("frame_model") ||
+        error.includes("estimated_delivery_days") ||
+        error.includes("delivery_fee"))
+    ) {
+      console.warn("Columns not yet added in Supabase. Falling back to embedded description tag...");
       const fallbackPayload = { ...updatePayload };
       const models = fallbackPayload.frame_models;
+      const estDays = fallbackPayload.estimated_delivery_days;
+      const delFee = fallbackPayload.delivery_fee;
       delete fallbackPayload.frame_models;
       delete fallbackPayload.frame_model;
+      delete fallbackPayload.estimated_delivery_days;
+      delete fallbackPayload.delivery_fee;
+      let tags = "";
       if (models) {
-        fallbackPayload.description = `<!--frame_models:${JSON.stringify(models)}-->\n${fallbackPayload.description || ""}`;
+        tags += `<!--frame_models:${JSON.stringify(models)}-->\n`;
+      }
+      if (estDays) {
+        tags += `<!--delivery_days:${estDays}-->\n`;
+      }
+      if (delFee !== undefined) {
+        tags += `<!--delivery_fee:${delFee}-->\n`;
+      }
+      if (tags) {
+        fallbackPayload.description = `${tags}${fallbackPayload.description || ""}`;
       }
       const retryRes = await supabaseQuery<any[]>("products", {
         method: "PATCH",

@@ -23,6 +23,8 @@ export type DevotionalProduct = {
   materials?: Array<ProductOptionVariant | string>;
   frame_models?: Array<ProductOptionVariant | string>;
   frameModel?: string;
+  estimated_delivery_days?: string;
+  delivery_fee?: number;
 };
 
 export const devotionalCategories = [

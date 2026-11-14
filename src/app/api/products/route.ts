@@ -26,6 +26,24 @@ function mapDbToProduct(row: any) {
     }
   }
 
+  let estDelivery = row.estimated_delivery_days;
+  if (!estDelivery && desc.includes("<!--delivery_days:")) {
+    const match = desc.match(/<!--delivery_days:(.*?)-->/);
+    if (match) {
+      estDelivery = match[1];
+      desc = desc.replace(/<!--delivery_days:.*?-->\s*/, "");
+    }
+  }
+
+  let delFee = row.delivery_fee;
+  if ((delFee === undefined || delFee === null) && desc.includes("<!--delivery_fee:")) {
+    const match = desc.match(/<!--delivery_fee:(.*?)-->/);
+    if (match) {
+      delFee = Number(match[1]) || 0;
+      desc = desc.replace(/<!--delivery_fee:.*?-->\s*/, "");
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -42,6 +60,10 @@ function mapDbToProduct(row: any) {
     frame_models: frameModels,
     frameModels,
     frame_model: row.frame_model || (frameModels[0]?.label || undefined),
+    estimated_delivery_days: estDelivery || "5-7 business days",
+    estimatedDeliveryDays: estDelivery || "5-7 business days",
+    delivery_fee: Number(delFee || 0),
+    deliveryFee: Number(delFee || 0),
     isNew: Boolean(row.is_new),
     isTrending: Boolean(row.is_trending),
     createdAt: row.created_at,
@@ -134,10 +156,16 @@ export async function POST(request: NextRequest) {
       sizes = [],
       frame_models = [],
       frameModels = [],
+      estimated_delivery_days,
+      estimatedDeliveryDays,
+      delivery_fee,
+      deliveryFee,
       isNew = false,
       isTrending = false,
     } = body;
 
+    const effectiveDeliveryDays = estimated_delivery_days || estimatedDeliveryDays || "5-7 business days";
+    const effectiveDeliveryFee = Number(delivery_fee ?? deliveryFee ?? 0);
     const effectiveFrameModels = frame_models.length > 0 ? frame_models : frameModels;
 
     if (!name || typeof name !== "string" || !name.trim()) {
@@ -172,6 +200,8 @@ export async function POST(request: NextRequest) {
       sizes: Array.isArray(sizes) ? sizes : [],
       frame_models: Array.isArray(effectiveFrameModels) ? effectiveFrameModels : [],
       frame_model: effectiveFrameModels[0]?.label || undefined,
+      estimated_delivery_days: effectiveDeliveryDays,
+      delivery_fee: effectiveDeliveryFee,
       is_new: Boolean(isNew),
       is_trending: Boolean(isTrending),
       created_at: new Date().toISOString(),
@@ -184,14 +214,31 @@ export async function POST(request: NextRequest) {
       useServiceRole: true,
     });
 
-    if (error && typeof error === "string" && (error.includes("frame_models") || error.includes("frame_model"))) {
-      console.warn("Column frame_models not yet added in Supabase. Falling back to embedded description tag...");
+    if (
+      error &&
+      typeof error === "string" &&
+      (error.includes("frame_models") ||
+        error.includes("frame_model") ||
+        error.includes("estimated_delivery_days") ||
+        error.includes("delivery_fee"))
+    ) {
+      console.warn("Columns not yet added in Supabase. Falling back to embedded description tags...");
       const fallbackPayload = { ...dbPayload };
       delete fallbackPayload.frame_models;
       delete fallbackPayload.frame_model;
+      delete fallbackPayload.estimated_delivery_days;
+      delete fallbackPayload.delivery_fee;
+      let tags = "";
       if (effectiveFrameModels && effectiveFrameModels.length > 0) {
-        fallbackPayload.description = `<!--frame_models:${JSON.stringify(effectiveFrameModels)}-->\n${fallbackPayload.description || ""}`;
+        tags += `<!--frame_models:${JSON.stringify(effectiveFrameModels)}-->\n`;
       }
+      if (effectiveDeliveryDays) {
+        tags += `<!--delivery_days:${effectiveDeliveryDays}-->\n`;
+      }
+      if (effectiveDeliveryFee !== undefined) {
+        tags += `<!--delivery_fee:${effectiveDeliveryFee}-->\n`;
+      }
+      fallbackPayload.description = `${tags}${fallbackPayload.description || ""}`;
       const retryRes = await supabaseQuery<any[]>("products", {
         method: "POST",
         body: fallbackPayload,

@@ -36,6 +36,10 @@ export interface Product {
   frameModels?: any[];
   frameModel?: string;
   frame_model?: string;
+  estimated_delivery_days?: string;
+  estimatedDeliveryDays?: string;
+  delivery_fee?: number;
+  deliveryFee?: number;
   stock: number;
   isNew: boolean;
   isTrending?: boolean;

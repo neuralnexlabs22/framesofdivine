@@ -78,14 +78,24 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           <div className="mt-6">
             <ProductDetailActions product={product} />
           </div>
-          {/* Free Delivery Badge */}
-          <div className="mt-6 border-t border-black-deep/10 pt-4 flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-black-deep">
-              FREE DELIVERY
-            </span>
-            <span className="text-xs font-bold uppercase tracking-widest text-black-deep underline">
-              PAN INDIA
-            </span>
+          {/* Delivery & Dispatch Badge */}
+          <div className="mt-6 border-t border-black-deep/10 pt-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-black-deep">
+                {product.delivery_fee && Number(product.delivery_fee) > 0
+                  ? `DELIVERY: ₹${Number(product.delivery_fee).toLocaleString("en-IN")}`
+                  : "FREE DELIVERY"}
+              </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-black-deep underline">
+                PAN INDIA
+              </span>
+            </div>
+            <p className="text-xs text-grey-stone flex items-center gap-1.5">
+              <span>Estimated Delivery:</span>
+              <span className="font-semibold text-black-deep">
+                {product.estimated_delivery_days || "5-7 business days"}
+              </span>
+            </p>
           </div>
         </div>
       </section>
