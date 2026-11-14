@@ -57,7 +57,7 @@ export default function CartDrawer() {
   } = useCart();
 
   const { contactInfo } = useContactInfo();
-  const whatsappNumber = contactInfo?.whatsapp_number || "8122228386";
+  const whatsappNumber = contactInfo?.whatsapp_number || "9047044916";
 
   const [couponCodeInput, setCouponCodeInput] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -80,7 +80,8 @@ export default function CartDrawer() {
 
   const handleWhatsAppCheckout = async () => {
     // Format message
-    const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "");
+    const rawDigits = whatsappNumber.replace(/\D/g, "");
+    const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
     const itemsList = items
       .map(
         (i, idx) =>
@@ -578,17 +579,23 @@ export default function CartDrawer() {
                   Our team will contact you via WhatsApp to confirm framing details and dispatch timing.
                 </p>
                 <div className="flex flex-col gap-2 pt-2">
-                  <a
-                    href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                      `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\nOrder ID: *${orderSuccess}*\nPayment Status: *Captured via Razorpay*\nCustomer: *${customerName.trim()}*\nPhone: *${customerPhone.trim()}*\nAddress: *${customerAddress.trim()}*\nTotal Paid: *₹${finalTotal.toLocaleString("en-IN")}*\n\nHello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-xl hover:brightness-110 transition-all shadow-md"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Send Order Copy to Admin WhatsApp</span>
-                  </a>
+                  {(() => {
+                    const rawDigits = whatsappNumber.replace(/\D/g, "");
+                    const targetPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+                    return (
+                      <a
+                        href={`https://wa.me/${targetPhone}?text=${encodeURIComponent(
+                          `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\nOrder ID: *${orderSuccess}*\nPayment Status: *Captured via Razorpay*\nCustomer: *${customerName.trim()}*\nPhone: *${customerPhone.trim()}*\nAddress: *${customerAddress.trim()}*\nTotal Paid: *₹${finalTotal.toLocaleString("en-IN")}*\n\nHello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-xl hover:brightness-110 transition-all shadow-md"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Send Order Copy to Admin WhatsApp</span>
+                      </a>
+                    );
+                  })()}
                   <button
                     onClick={() => {
                       setShowCheckoutModal(false);

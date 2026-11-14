@@ -11,7 +11,7 @@ export default function AdminSettingsPage() {
   const [message, setMessage] = useState({ text: "", type: "" as "success" | "error" | "" });
 
   const [siteName, setSiteName] = useState("Frames of Divine");
-  const [announcementText, setAnnouncementText] = useState("Traditional God Photo Prints & Devotional Frames | Customization available | WhatsApp: 8122228386");
+  const [announcementText, setAnnouncementText] = useState("Traditional God Photo Prints & Devotional Frames | Customization available | WhatsApp: 90470 44916");
   const [announcementEnabled, setAnnouncementEnabled] = useState(true);
   const [seoTitle, setSeoTitle] = useState("Frames of Divine | Devotional Art & Frames");
   const [seoDescription, setSeoDescription] = useState("Shop premium Hindu devotional photo prints, framed deities, temple art, and sacred architecture photography.");
@@ -27,7 +27,9 @@ export default function AdminSettingsPage() {
       const announcementSetting = getSetting("announcement_bar");
       if (announcementSetting) {
         const announcement = announcementSetting as { text?: string; enabled?: boolean };
-        if (announcement.text) setAnnouncementText(announcement.text);
+        if (announcement.text) {
+          setAnnouncementText(announcement.text.replace(/8122228386|81222\s*28386/g, "90470 44916"));
+        }
         if (typeof announcement.enabled === "boolean") setAnnouncementEnabled(announcement.enabled);
       }
 

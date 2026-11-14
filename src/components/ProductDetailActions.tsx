@@ -52,7 +52,7 @@ function parseOptionItem(item: any): OptionItem | null {
 export default function ProductDetailActions({ product }: { product: DevotionalProduct }) {
   const { addItem, openCart } = useCart();
   const { contactInfo } = useContactInfo();
-  const whatsappNumber = contactInfo?.whatsapp_number || "8122228386";
+  const whatsappNumber = contactInfo?.whatsapp_number || "9047044916";
 
   const sizeOptions: OptionItem[] = useMemo(() => {
     if (Array.isArray(product.sizes) && product.sizes.length > 0) {
@@ -115,7 +115,8 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
   };
 
   const handleWhatsAppOrder = () => {
-    const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "");
+    const rawDigits = whatsappNumber.replace(/\D/g, "");
+    const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
     const msg = `*🕉️ ORDER INQUIRY — TANJORE PAINTINGS*\n\n` +
       `Product: *${product.name}*\n` +
       `Material / Framing: ${activeMaterial.label}${activeMaterial.priceDelta > 0 ? ` (+₹${activeMaterial.priceDelta.toLocaleString("en-IN")})` : ""}\n` +

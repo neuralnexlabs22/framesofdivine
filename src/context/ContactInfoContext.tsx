@@ -5,6 +5,23 @@ import type { ContactInfo } from "@/types/contact";
 
 const STORAGE_KEY = "colour_seven_contact_info";
 
+const DEFAULT_CONTACT_INFO: ContactInfo = {
+  id: "default-contact-info",
+  whatsapp_number: "9047044916",
+  phone_number: "90470 44916",
+  email: "contact@framesofdivine.com",
+  address: "Thanjavur Traditional Art Studio",
+  city: "Thanjavur",
+  state: "Tamil Nadu",
+  postal_code: "613001",
+  country: "India",
+  social_media: {},
+  business_hours: {},
+  is_active: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 interface ContactInfoContextType {
   contactInfo: ContactInfo | null;
   loaded: boolean;
@@ -16,7 +33,7 @@ interface ContactInfoContextType {
 const ContactInfoContext = createContext<ContactInfoContextType | undefined>(undefined);
 
 export function ContactInfoProvider({ children }: { children: ReactNode }) {
-  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(DEFAULT_CONTACT_INFO);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -25,9 +42,18 @@ export function ContactInfoProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const stored = typeof window === "undefined" ? null : window.localStorage.getItem(STORAGE_KEY);
-      setContactInfo(stored ? JSON.parse(stored) as ContactInfo : null);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ContactInfo;
+        if (parsed.whatsapp_number === "8122228386") parsed.whatsapp_number = "9047044916";
+        if (parsed.phone_number === "8122228386" || parsed.phone_number === "+91 81222 28386") {
+          parsed.phone_number = "90470 44916";
+        }
+        setContactInfo({ ...DEFAULT_CONTACT_INFO, ...parsed });
+      } else {
+        setContactInfo(DEFAULT_CONTACT_INFO);
+      }
     } catch {
-      setContactInfo(null);
+      setContactInfo(DEFAULT_CONTACT_INFO);
     } finally {
       setLoading(false);
       setLoaded(true);

@@ -5,8 +5,8 @@ import { useContactInfo } from "@/context/ContactInfoContext";
 
 export default function ContactPage() {
   const { contactInfo } = useContactInfo();
-  const phone = contactInfo?.phone_number || "8122228386";
-  const whatsapp = contactInfo?.whatsapp_number || phone;
+  const phone = contactInfo?.phone_number || "+91 90470 44916";
+  const whatsapp = contactInfo?.whatsapp_number || "90470 44916";
   const email = contactInfo?.email || "contact@framesofdivine.com";
   const location = contactInfo?.address || (contactInfo?.city ? `${contactInfo.city}, India` : "India");
 

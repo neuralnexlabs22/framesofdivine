@@ -12,7 +12,7 @@ export interface WhatsAppNotificationResult {
 
 /**
  * Normalizes an Indian or international phone number to E.164 format without '+'
- * e.g., "8122228386" -> "918122228386", "+91 81222 28386" -> "918122228386"
+ * e.g., "9047044916" -> "919047044916", "+91 90470 44916" -> "919047044916"
  */
 export function normalizePhoneNumber(raw: string): string {
   const digits = raw.replace(/\D/g, "");
@@ -216,7 +216,7 @@ export async function triggerOrderPaidWhatsAppNotification(
       process.env.ADMIN_WHATSAPP_NUMBER ||
       process.env.WHATSAPP_ADMIN_PHONE ||
       process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ||
-      "8122228386";
+      "9047044916";
     const recipientPhone = normalizePhoneNumber(targetPhoneRaw);
 
     let provider: WhatsAppNotificationResult["provider"] = "simulated";

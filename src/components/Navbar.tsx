@@ -49,11 +49,12 @@ export default function Navbar() {
     return categoryLinks;
   }, [catalogCategories]);
 
-  const phone = contactInfo?.phone_number || "8122228386";
+  const phone = contactInfo?.phone_number || "90470 44916";
   const announcementSetting = getSetting("announcement_bar") as { text?: string; enabled?: boolean } | undefined;
-  const announcementText =
+  const rawAnnouncement =
     announcementSetting?.text ||
     `Traditional God Photo Paintings & Devotional Artworks | Customization available | WhatsApp: ${phone}`;
+  const announcementText = rawAnnouncement.replace(/8122228386|81222\s*28386/g, "90470 44916");
   const announcementEnabled = announcementSetting?.enabled !== false;
 
   useEffect(() => {

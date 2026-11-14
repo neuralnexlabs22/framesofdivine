@@ -20,7 +20,7 @@ import { useContactInfo } from "@/context/ContactInfoContext";
 
 export default function CustomOrderPage() {
   const { contactInfo } = useContactInfo();
-  const whatsappNumber = contactInfo?.whatsapp_number || "8122228386";
+  const whatsappNumber = contactInfo?.whatsapp_number || "9047044916";
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -90,7 +90,8 @@ export default function CustomOrderPage() {
   };
 
   const handleSendViaWhatsApp = () => {
-    const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "");
+    const rawDigits = whatsappNumber.replace(/\D/g, "");
+    const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
     let msg = `*🕉️ CUSTOM DEVOTIONAL PHOTO ENQUIRY — FRAMES OF DIVINE*\n\n`;
     msg += `*Customer Name:* ${name.trim() || "Devotee"}\n`;
     msg += `*Contact Phone:* ${phone.trim()}\n`;

@@ -22,10 +22,19 @@ export async function POST(request: NextRequest) {
 
     // Record order in Supabase orders table
     const orderData = {
+      id: orderId,
       total_amount: Number(final_amount) || Number(subtotal) || 0,
+      subtotal: Number(subtotal) || Number(final_amount) || 0,
+      discount_amount: Number(discount_amount) || 0,
+      currency: "INR",
       status: "pending",
       payment_status: payment_method === "cod" ? "pending_cod" : "pending_verification",
-      shipping_address: JSON.stringify({
+      payment_method: payment_method || "whatsapp",
+      customer_name: customer_name ? String(customer_name).trim() : null,
+      customer_phone: customer_phone ? String(customer_phone).trim() : null,
+      customer_email: customer_email ? String(customer_email).trim() : null,
+      items: items || null,
+      shipping_address: typeof shipping_address === "string" ? shipping_address : JSON.stringify({
         customer_name,
         customer_phone,
         customer_email,
@@ -41,6 +50,7 @@ export async function POST(request: NextRequest) {
     const { data: createdOrder, error: orderError } = await supabaseQuery("orders", {
       method: "POST",
       body: orderData,
+      useServiceRole: true,
     });
 
     if (orderError) {
@@ -63,11 +73,13 @@ export async function POST(request: NextRequest) {
       await supabaseQuery("coupon_usages", {
         method: "POST",
         body: usageRecord,
+        useServiceRole: true,
       });
 
       // Increment used count on coupon
       const { data: couponData } = await supabaseQuery<any[]>("discount_coupons", {
         query: `code=eq.${encodeURIComponent(String(coupon_code).toUpperCase())}&select=id,used_count`,
+        useServiceRole: true,
       });
       if (couponData && couponData[0]) {
         const currentCount = Number(couponData[0].used_count) || 0;
@@ -75,6 +87,7 @@ export async function POST(request: NextRequest) {
           method: "PATCH",
           query: `id=eq.${encodeURIComponent(couponData[0].id)}`,
           body: { used_count: currentCount + 1, updated_at: new Date().toISOString() },
+          useServiceRole: true,
         });
       }
     }
@@ -82,7 +95,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       order_id: orderId,
-      order: createdOrder?.[0] || { id: orderId, ...orderData },
+      order: createdOrder?.[0] || orderData,
     });
   } catch (err) {
     return NextResponse.json(
