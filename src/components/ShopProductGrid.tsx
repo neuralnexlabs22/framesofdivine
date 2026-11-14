@@ -58,7 +58,12 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
           image: p.images?.[0] || "/assets/devotional/deity-gallery-montage.png",
           imageAlt: p.name,
           badge: p.brand || p.category,
-          size: p.sizes?.[0] || "12 x 18 in / 22KT Gold Tanjore",
+          size:
+            Array.isArray(p.sizes) && p.sizes[0]
+              ? typeof p.sizes[0] === "object" && p.sizes[0] !== null
+                ? (p.sizes[0] as any).label || "12 x 18 in / 22KT Gold Tanjore"
+                : String(p.sizes[0])
+              : "12 x 18 in / 22KT Gold Tanjore",
         };
         map.set(slug, mapped);
         map.set(p.id, mapped);

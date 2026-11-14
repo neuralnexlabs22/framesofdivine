@@ -43,7 +43,12 @@ export default function HomePage() {
         image: p.images?.[0] || "/assets/devotional/deity-gallery-montage.png",
         imageAlt: p.name,
         badge: p.brand || p.category,
-        size: p.sizes?.[0] || "22KT Gold Tanjore Painting",
+        size:
+          Array.isArray(p.sizes) && p.sizes[0]
+            ? typeof p.sizes[0] === "object" && p.sizes[0] !== null
+              ? (p.sizes[0] as any).label || "22KT Gold Tanjore Painting"
+              : String(p.sizes[0])
+            : "22KT Gold Tanjore Painting",
       }))
     : devotionalProducts;
 

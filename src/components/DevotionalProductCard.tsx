@@ -6,8 +6,18 @@ import { Heart, HelpCircle, Scale, ShoppingBag, Zap } from "lucide-react";
 import type { DevotionalProduct } from "@/data/devotionalProducts";
 import { useCart } from "@/context/CartContext";
 
+function getSafeSize(val: any): string {
+  if (!val) return "12 x 18 in";
+  if (typeof val === "string") return val;
+  if (typeof val === "object" && val !== null && val.label) return String(val.label);
+  return String(val);
+}
+
 export default function DevotionalProductCard({ product }: { product: DevotionalProduct }) {
   const { addItem, openCart } = useCart();
+
+  const sizeString = getSafeSize(product.size);
+  const sizeShort = sizeString.split(" / ")[0] || sizeString;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -20,7 +30,7 @@ export default function DevotionalProductCard({ product }: { product: Devotional
       price: product.price,
       originalPrice: product.originalPrice,
       image: product.image,
-      size: product.size.split(" / ")[0] || "12 x 18 in",
+      size: sizeShort,
       frame: "22KT Gold Tanjore Painting",
       quantity: 1,
     });
@@ -37,7 +47,7 @@ export default function DevotionalProductCard({ product }: { product: Devotional
       price: product.price,
       originalPrice: product.originalPrice,
       image: product.image,
-      size: product.size.split(" / ")[0] || "12 x 18 in",
+      size: sizeShort,
       frame: "22KT Gold Tanjore Painting",
       quantity: 1,
     });
@@ -79,10 +89,10 @@ export default function DevotionalProductCard({ product }: { product: Devotional
       <div className="p-4 text-black-deep transition-cinematic group-hover:bg-[#1a1108] group-hover:text-[#f4f0e8]">
         <div className="flex items-center justify-between">
           <p className="text-[10px] uppercase tracking-[0.22em] text-grey-stone group-hover:text-white-ivory/60">{product.category}</p>
-          <span className="text-[9px] font-semibold text-black-deep bg-black-deep/5 group-hover:text-white-ivory/60 group-hover:bg-white-pure/10 px-2 py-0.5 rounded-sm">{product.size.split(' / ')[0]}</span>
+          <span className="text-[9px] font-semibold text-black-deep bg-black-deep/5 group-hover:text-white-ivory/60 group-hover:bg-white-pure/10 px-2 py-0.5 rounded-sm">{sizeShort}</span>
         </div>
         <h3 className="mt-2 min-h-[3rem] font-serif text-xl leading-tight">{product.name}</h3>
-        <p className="mt-2 text-xs text-grey-stone/80 line-clamp-1">{product.size}</p>
+        <p className="mt-2 text-xs text-grey-stone/80 line-clamp-1">{sizeString}</p>
         <div className="mt-3 flex items-center justify-between gap-3">
           <div>
             <span className="font-semibold">₹{product.price.toLocaleString("en-IN")}</span>
