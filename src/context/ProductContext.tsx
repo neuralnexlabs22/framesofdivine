@@ -31,6 +31,11 @@ export interface Product {
   description: string;
   sizes: any[];
   colors: any[];
+  materials?: any[];
+  frame_models?: any[];
+  frameModels?: any[];
+  frameModel?: string;
+  frame_model?: string;
   stock: number;
   isNew: boolean;
   isTrending?: boolean;

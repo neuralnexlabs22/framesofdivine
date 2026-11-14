@@ -11,7 +11,7 @@ import {
 } from "react";
 
 export interface CartItem {
-  cartItemId: string; // unique key e.g. "product-id-size-frame"
+  cartItemId: string; // unique key e.g. "product-id-size-frame-model"
   id: string;
   slug: string;
   name: string;
@@ -21,6 +21,7 @@ export interface CartItem {
   image: string;
   size: string;
   frame: string;
+  frameModel?: string;
   quantity: number;
 }
 
@@ -177,7 +178,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (item: Omit<CartItem, "cartItemId" | "quantity"> & { quantity?: number }) => {
       const quantity = Math.max(1, item.quantity || 1);
-      const cartItemId = `${item.id}-${item.size || "standard"}-${item.frame || "unframed"}`;
+      const cartItemId = `${item.id}-${item.size || "standard"}-${item.frame || "unframed"}-${item.frameModel || "default"}`;
 
       setItems((prev) => {
         const existingIndex = prev.findIndex((i) => i.cartItemId === cartItemId);

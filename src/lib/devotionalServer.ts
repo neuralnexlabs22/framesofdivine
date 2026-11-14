@@ -39,6 +39,18 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
 
   const { category, description } = extractCategoryAndDescription(row);
 
+  let frameModels: any[] = [];
+  if (Array.isArray(row.frame_models)) {
+    frameModels = row.frame_models;
+  } else if (typeof row.description === "string" && row.description.includes("<!--frame_models:")) {
+    const match = row.description.match(/<!--frame_models:(.*?)-->/);
+    if (match) {
+      try {
+        frameModels = JSON.parse(match[1]);
+      } catch {}
+    }
+  }
+
   const firstSize = Array.isArray(row.sizes) && row.sizes[0]
     ? (typeof row.sizes[0] === "object" ? row.sizes[0].label : String(row.sizes[0]))
     : "12 x 18 in / 22KT Gold Tanjore";
@@ -66,6 +78,7 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
       : Array.isArray(row.colors)
       ? row.colors
       : [],
+    frame_models: frameModels,
   };
 }
 

@@ -99,7 +99,8 @@ export default function CartDrawer() {
       .map((i, idx) => {
         const slug = i.slug || i.id;
         const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
-        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+        const modelStr = i.frameModel ? `\n   Frame Model: ${i.frameModel}` : "";
+        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
       })
       .join("\n\n");
 
@@ -423,6 +424,7 @@ export default function CartDrawer() {
                         <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-zinc-400">
                           {item.size && <span>{item.size}</span>}
                           {item.frame && <span>· {item.frame}</span>}
+                          {item.frameModel && <span>· Model: {item.frameModel}</span>}
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <span className="font-semibold text-sm text-[#c9a227]">
@@ -624,7 +626,10 @@ export default function CartDrawer() {
                       <div key={idx} className="flex justify-between text-zinc-300 pt-1">
                         <div>
                           <p className="font-semibold text-white">{it.name}</p>
-                          <p className="text-[10px] text-zinc-400">{it.size || "Standard"} • {it.frame || "Traditional Finish"}</p>
+                          <p className="text-[10px] text-zinc-400">
+                            {it.size || "Standard"} • {it.frame || "Traditional Finish"}
+                            {it.frameModel ? ` • Model: ${it.frameModel}` : ""}
+                          </p>
                         </div>
                         <p className="font-mono">₹{(Number(it.price) * it.quantity).toLocaleString("en-IN")}</p>
                       </div>
@@ -653,7 +658,8 @@ export default function CartDrawer() {
                           .map((i, idx) => {
                             const slug = i.slug || i.id;
                             const link = slug ? `\n   👉 Product Link: ${baseUrl}/products/${slug}` : "";
-                            return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Finish/Material: ${i.frame || "22KT Gold Tanjore Painting"}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+                            const modelStr = i.frameModel ? `\n   Frame Model: ${i.frameModel}` : "";
+                            return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Finish/Material: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
                           })
                           .join("\n\n")
                       : "Devotional Artwork Order";
@@ -725,11 +731,7 @@ export default function CartDrawer() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (paymentMethod === "razorpay") {
-                      handleRazorpayCheckout();
-                    } else {
-                      handleDirectOrder(e);
-                    }
+                    handleRazorpayCheckout();
                   }}
                   className="space-y-4"
                 >
@@ -792,51 +794,19 @@ export default function CartDrawer() {
                   {/* Payment Method Selector */}
                   <div className="space-y-2 pt-1">
                     <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
-                      Select Payment Method *
+                      Payment Method *
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("razorpay")}
-                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
-                          paymentMethod === "razorpay"
-                            ? "border-[#c9a227] bg-[#c9a227]/10 text-white"
-                            : "border-white/10 bg-white/[0.02] text-zinc-400 hover:border-white/20"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full mb-1">
-                          <span className="text-xs font-bold flex items-center gap-1.5 text-white">
-                            <CreditCard className="h-3.5 w-3.5 text-[#c9a227]" />
-                            Razorpay
-                          </span>
-                          {paymentMethod === "razorpay" && (
-                            <span className="h-2 w-2 rounded-full bg-[#c9a227]" />
-                          )}
-                        </div>
-                        <span className="text-[10px] text-zinc-400">
-                          UPI, GPay, Cards, NetBanking
+                    <div className="p-3.5 rounded-xl border border-[#c9a227] bg-[#c9a227]/10 text-white flex flex-col justify-between transition-all">
+                      <div className="flex items-center justify-between w-full mb-1">
+                        <span className="text-xs font-bold flex items-center gap-1.5 text-white">
+                          <CreditCard className="h-3.5 w-3.5 text-[#c9a227]" />
+                          Razorpay Secure Checkout
                         </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("cod")}
-                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
-                          paymentMethod === "cod"
-                            ? "border-[#c9a227] bg-[#c9a227]/10 text-white"
-                            : "border-white/10 bg-white/[0.02] text-zinc-400 hover:border-white/20"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full mb-1">
-                          <span className="text-xs font-bold text-white">Cash on Delivery</span>
-                          {paymentMethod === "cod" && (
-                            <span className="h-2 w-2 rounded-full bg-[#c9a227]" />
-                          )}
-                        </div>
-                        <span className="text-[10px] text-zinc-400">
-                          Pay upon parcel delivery
-                        </span>
-                      </button>
+                        <span className="h-2 w-2 rounded-full bg-[#c9a227]" />
+                      </div>
+                      <span className="text-[11px] text-zinc-300 font-medium">
+                        UPI , Credit card , Debit Card and Netbanking
+                      </span>
                     </div>
                   </div>
 
@@ -858,9 +828,7 @@ export default function CartDrawer() {
                     </div>
                     <p className="text-[11px] text-zinc-300 pt-1 flex items-center gap-1 font-medium">
                       <ShieldCheck className="h-3.5 w-3.5 text-[#c9a227]" />
-                      {paymentMethod === "razorpay"
-                        ? "256-Bit SSL Secured by Razorpay. 100% Buyer Protection."
-                        : "Pay cash or UPI at the time of insured doorstep delivery."}
+                      256-Bit SSL Secured by Razorpay. 100% Buyer Protection.
                     </p>
                   </div>
 
@@ -872,13 +840,11 @@ export default function CartDrawer() {
                     >
                       {orderSubmitting ? (
                         "Processing..."
-                      ) : paymentMethod === "razorpay" ? (
+                      ) : (
                         <>
                           <Lock className="h-3.5 w-3.5" />
                           Pay ₹{finalTotal.toLocaleString("en-IN")} with Razorpay
                         </>
-                      ) : (
-                        "Confirm Cash on Delivery Order"
                       )}
                     </button>
                     <button

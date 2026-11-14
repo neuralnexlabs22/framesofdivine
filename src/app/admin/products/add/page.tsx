@@ -87,6 +87,15 @@ export default function AddProductPage() {
   const [materialInput, setMaterialInput] = useState("");
   const [materialDeltaInput, setMaterialDeltaInput] = useState("");
 
+  const [frameModelsList, setFrameModelsList] = useState<Array<{ label: string; priceDelta: number }>>([
+    { label: "Classic Teak Wood Frame", priceDelta: 0 },
+    { label: "Chettinad Mani Frame", priceDelta: 0 },
+    { label: "Antique Gold Carved Frame", priceDelta: 500 },
+    { label: "Traditional Rosewood Finish", priceDelta: 400 },
+  ]);
+  const [frameModelInput, setFrameModelInput] = useState("");
+  const [frameModelDeltaInput, setFrameModelDeltaInput] = useState("");
+
   const [colorInput, setColorInput] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>(["", "", "", "", ""]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(["", "", "", "", ""]);
@@ -250,6 +259,8 @@ export default function AddProductPage() {
           materialsList.length > 0
             ? materialsList
             : ["Teak Wood Frame", "Matte Gold Frame"],
+        frame_models: frameModelsList,
+        frame_model: frameModelsList[0]?.label || "Classic Teak Wood Frame",
         stock: parseInt(formData.stockQuantity) || 0,
         isNew: formData.featured,
         isTrending: formData.isTrending,
@@ -812,6 +823,95 @@ export default function AddProductPage() {
               className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> Add Material
+            </button>
+          </div>
+        </div>
+
+        {/* SECTION: FRAME MODELS */}
+        <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="font-serif text-lg text-white font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#c9a227]" />
+                Frame Models
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Configure frame moldings and profiles (e.g. Chettinad Mani Frame, Classic Teak, Antique Carved)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setFrameModelsList([
+                  { label: "Classic Teak Wood Frame", priceDelta: 0 },
+                  { label: "Chettinad Mani Frame", priceDelta: 0 },
+                  { label: "Antique Gold Carved Frame", priceDelta: 500 },
+                  { label: "Traditional Rosewood Finish", priceDelta: 400 },
+                ])
+              }
+              className="text-[11px] font-bold text-[#c9a227] bg-[#c9a227]/10 hover:bg-[#c9a227]/20 border border-[#c9a227]/30 px-3 py-1.5 rounded-lg transition-all w-fit"
+            >
+              + Load Standard Frame Models
+            </button>
+          </div>
+
+          {/* Existing Frame Models Chips */}
+          <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-black/40 rounded-xl border border-white/5">
+            {frameModelsList.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-1">No frame models configured. Add one below.</span>
+            ) : (
+              frameModelsList.map((m) => (
+                <span
+                  key={m.label}
+                  className="flex items-center gap-2 text-xs bg-black border border-[#c9a227]/40 text-white px-3 py-2 rounded-lg"
+                >
+                  <span className="font-semibold">{m.label}</span>
+                  <span className="text-[#e8c75d] font-bold">
+                    {m.priceDelta > 0 ? `+₹${m.priceDelta.toLocaleString("en-IN")}` : "+₹0"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFrameModelsList(frameModelsList.filter((item) => item.label !== m.label))}
+                    className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          {/* Add Frame Model Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_auto] gap-2 pt-1">
+            <input
+              type="text"
+              value={frameModelInput}
+              onChange={(e) => setFrameModelInput(e.target.value)}
+              placeholder="Model (e.g. Chettinad Mani Frame, Carved Teak)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <input
+              type="number"
+              value={frameModelDeltaInput}
+              onChange={(e) => setFrameModelDeltaInput(e.target.value)}
+              placeholder="Price Delta ₹ (e.g. 500, or 0)"
+              className="bg-black border border-white/10 rounded-lg px-3.5 py-2.5 text-white placeholder-zinc-600 focus:border-[#c9a227] text-xs transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const label = frameModelInput.trim();
+                if (!label) return;
+                const delta = Number(frameModelDeltaInput.trim().replace(/[^\d.]/g, "")) || 0;
+                if (!frameModelsList.some((m) => m.label.toLowerCase() === label.toLowerCase())) {
+                  setFrameModelsList([...frameModelsList, { label, priceDelta: delta }]);
+                }
+                setFrameModelInput("");
+                setFrameModelDeltaInput("");
+              }}
+              className="px-4 py-2.5 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Add Model
             </button>
           </div>
         </div>

@@ -101,7 +101,8 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
 
       const optionsArr = [];
       if (item.size) optionsArr.push(`Size: ${item.size}`);
-      if (item.frame) optionsArr.push(`Frame: ${item.frame}`);
+      if (item.frame) optionsArr.push(`Frame/Finish: ${item.frame}`);
+      if (item.frameModel) optionsArr.push(`Frame Model: ${item.frameModel}`);
       if (item.material) optionsArr.push(`Material: ${item.material}`);
       const optionsStr = optionsArr.length > 0 ? `\n   ↳ _${optionsArr.join(" | ")}_` : "";
 

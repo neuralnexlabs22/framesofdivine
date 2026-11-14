@@ -49,6 +49,13 @@ function parseOptionItem(item: any): OptionItem | null {
   return { label: str, priceDelta: 0 };
 }
 
+const defaultFrameModelOptions: OptionItem[] = [
+  { label: "Classic Teak Wood Frame", priceDelta: 0 },
+  { label: "Chettinad Mani Frame", priceDelta: 0 },
+  { label: "Antique Gold Carved Frame", priceDelta: 500 },
+  { label: "Traditional Rosewood Finish", priceDelta: 400 },
+];
+
 export default function ProductDetailActions({ product }: { product: DevotionalProduct }) {
   const { addItem, openCart } = useCart();
   const { contactInfo } = useContactInfo();
@@ -79,11 +86,24 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
     return defaultMaterialOptions;
   }, [product.materials, product.colors]);
 
+  const frameModelOptions: OptionItem[] = useMemo(() => {
+    if (Array.isArray(product.frame_models) && product.frame_models.length > 0) {
+      const parsed = product.frame_models
+        .map(parseOptionItem)
+        .filter((x): x is OptionItem => Boolean(x && x.label));
+      if (parsed.length > 0) return parsed;
+    }
+    return defaultFrameModelOptions;
+  }, [product.frame_models]);
+
   const [selectedMaterial, setSelectedMaterial] = useState<OptionItem>(
     () => materialOptions[0] || defaultMaterialOptions[0]
   );
   const [selectedSize, setSelectedSize] = useState<OptionItem>(
     () => sizeOptions[0] || defaultSizeOptions[0]
+  );
+  const [selectedFrameModel, setSelectedFrameModel] = useState<OptionItem>(
+    () => frameModelOptions[0] || defaultFrameModelOptions[0]
   );
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -91,10 +111,11 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
   // Sync if options change
   const activeMaterial = materialOptions.find((m) => m.label === selectedMaterial.label) || materialOptions[0] || defaultMaterialOptions[0];
   const activeSize = sizeOptions.find((s) => s.label === selectedSize.label) || sizeOptions[0] || defaultSizeOptions[0];
+  const activeFrameModel = frameModelOptions.find((f) => f.label === selectedFrameModel.label) || frameModelOptions[0] || defaultFrameModelOptions[0];
 
-  const unitPrice = product.price + (activeMaterial?.priceDelta || 0) + (activeSize?.priceDelta || 0);
+  const unitPrice = product.price + (activeMaterial?.priceDelta || 0) + (activeSize?.priceDelta || 0) + (activeFrameModel?.priceDelta || 0);
   const originalPrice = product.originalPrice
-    ? product.originalPrice + (activeMaterial?.priceDelta || 0) + (activeSize?.priceDelta || 0)
+    ? product.originalPrice + (activeMaterial?.priceDelta || 0) + (activeSize?.priceDelta || 0) + (activeFrameModel?.priceDelta || 0)
     : undefined;
 
   const handleAddToCart = () => {
@@ -108,6 +129,7 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
       image: product.image,
       size: activeSize.label,
       frame: activeMaterial.label,
+      frameModel: activeFrameModel.label,
       quantity,
     });
     setAdded(true);
@@ -124,6 +146,7 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
       `Product: *${product.name}*\n` +
       `Material / Framing: ${activeMaterial.label}${activeMaterial.priceDelta > 0 ? ` (+₹${activeMaterial.priceDelta.toLocaleString("en-IN")})` : ""}\n` +
       `Size: ${activeSize.label}${activeSize.priceDelta > 0 ? ` (+₹${activeSize.priceDelta.toLocaleString("en-IN")})` : ""}\n` +
+      `Frame Model: ${activeFrameModel.label}${activeFrameModel.priceDelta > 0 ? ` (+₹${activeFrameModel.priceDelta.toLocaleString("en-IN")})` : ""}\n` +
       `Quantity: ${quantity}\n` +
       `Calculated Unit Price: ₹${unitPrice.toLocaleString("en-IN")}\n` +
       `Total Amount: ₹${(unitPrice * quantity).toLocaleString("en-IN")}\n\n` +
@@ -205,6 +228,44 @@ export default function ProductDetailActions({ product }: { product: DevotionalP
                 key={opt.label}
                 type="button"
                 onClick={() => setSelectedSize(opt)}
+                className={`px-3.5 py-2 text-xs md:text-sm border rounded-sm transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? "border-black-deep bg-black-deep !text-white font-semibold shadow-sm"
+                    : "border-black-deep/20 text-black-deep hover:border-black-deep/60 bg-white"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {opt.priceDelta > 0 && (
+                  <span className={isSelected ? "text-[#e8c75d] text-[11px] font-medium" : "text-amber-800 text-[11px] font-medium"}>
+                    (+₹{opt.priceDelta.toLocaleString("en-IN")})
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Frame Model Selector */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-grey-stone font-bold block">
+            Frame Model
+          </span>
+          {activeFrameModel.priceDelta > 0 && (
+            <span className="text-[11px] font-semibold text-[#a8661f]">
+              +{`₹${activeFrameModel.priceDelta.toLocaleString("en-IN")}`}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {frameModelOptions.map((opt) => {
+            const isSelected = activeFrameModel.label === opt.label;
+            return (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => setSelectedFrameModel(opt)}
                 className={`px-3.5 py-2 text-xs md:text-sm border rounded-sm transition-all flex items-center gap-1.5 ${
                   isSelected
                     ? "border-black-deep bg-black-deep !text-white font-semibold shadow-sm"

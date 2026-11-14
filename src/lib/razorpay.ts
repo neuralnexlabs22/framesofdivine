@@ -41,6 +41,7 @@ export interface CheckoutItemInput {
   quantity: number;
   size?: string;
   frame?: string;
+  frameModel?: string;
 }
 
 export interface AuthoritativePricingResult {
@@ -158,6 +159,7 @@ export async function calculateAuthoritativeTotal(
       totalPrice: itemTotal,
       size: item.size,
       frame: item.frame,
+      frameModel: item.frameModel,
     });
   }
 

@@ -52,6 +52,12 @@ export async function PATCH(
     if (body.stock !== undefined) updatePayload.stock = Number(body.stock);
     if (body.colors !== undefined) updatePayload.colors = body.colors;
     if (body.sizes !== undefined) updatePayload.sizes = body.sizes;
+    if (body.frame_models !== undefined || body.frameModels !== undefined) {
+      updatePayload.frame_models = body.frame_models || body.frameModels;
+    }
+    if (body.frame_model !== undefined || body.frameModel !== undefined) {
+      updatePayload.frame_model = body.frame_model || body.frameModel;
+    }
     if (body.isNew !== undefined) updatePayload.is_new = Boolean(body.isNew);
     if (body.isTrending !== undefined) updatePayload.is_trending = Boolean(body.isTrending);
 
@@ -61,6 +67,25 @@ export async function PATCH(
       body: updatePayload,
       useServiceRole: true,
     });
+
+    if (error && typeof error === "string" && (error.includes("frame_models") || error.includes("frame_model"))) {
+      console.warn("Column frame_models not yet added in Supabase. Falling back to embedded description tag...");
+      const fallbackPayload = { ...updatePayload };
+      const models = fallbackPayload.frame_models;
+      delete fallbackPayload.frame_models;
+      delete fallbackPayload.frame_model;
+      if (models) {
+        fallbackPayload.description = `<!--frame_models:${JSON.stringify(models)}-->\n${fallbackPayload.description || ""}`;
+      }
+      const retryRes = await supabaseQuery<any[]>("products", {
+        method: "PATCH",
+        query: `id=eq.${encodeURIComponent(id)}`,
+        body: fallbackPayload,
+        useServiceRole: true,
+      });
+      data = retryRes.data;
+      error = retryRes.error;
+    }
 
     if (error && typeof error === "string" && error.includes("products_category_check")) {
       console.warn("Retrying patch with fallback category and embedded category tag due to check constraint...");

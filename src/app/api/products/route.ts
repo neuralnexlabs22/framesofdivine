@@ -13,6 +13,19 @@ function mapDbToProduct(row: any) {
     }
   }
 
+  let frameModels: any[] = [];
+  if (Array.isArray(row.frame_models)) {
+    frameModels = row.frame_models;
+  } else if (desc.includes("<!--frame_models:")) {
+    const match = desc.match(/<!--frame_models:(.*?)-->/);
+    if (match) {
+      try {
+        frameModels = JSON.parse(match[1]);
+      } catch {}
+      desc = desc.replace(/<!--frame_models:.*?-->\s*/, "");
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -26,6 +39,9 @@ function mapDbToProduct(row: any) {
     stock: row.stock ?? 10,
     colors: Array.isArray(row.colors) ? row.colors : [],
     sizes: Array.isArray(row.sizes) ? row.sizes : [],
+    frame_models: frameModels,
+    frameModels,
+    frame_model: row.frame_model || (frameModels[0]?.label || undefined),
     isNew: Boolean(row.is_new),
     isTrending: Boolean(row.is_trending),
     createdAt: row.created_at,
@@ -116,9 +132,13 @@ export async function POST(request: NextRequest) {
       stock = 10,
       colors = [],
       sizes = [],
+      frame_models = [],
+      frameModels = [],
       isNew = false,
       isTrending = false,
     } = body;
+
+    const effectiveFrameModels = frame_models.length > 0 ? frame_models : frameModels;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ error: "Product name is required" }, { status: 400 });
@@ -137,7 +157,7 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
-    const dbPayload = {
+    const dbPayload: any = {
       id,
       name: name.trim(),
       slug,
@@ -150,17 +170,36 @@ export async function POST(request: NextRequest) {
       stock: Number(stock) || 10,
       colors: Array.isArray(colors) ? colors : [],
       sizes: Array.isArray(sizes) ? sizes : [],
+      frame_models: Array.isArray(effectiveFrameModels) ? effectiveFrameModels : [],
+      frame_model: effectiveFrameModels[0]?.label || undefined,
       is_new: Boolean(isNew),
       is_trending: Boolean(isTrending),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabaseQuery<any[]>("products", {
+    let { data, error } = await supabaseQuery<any[]>("products", {
       method: "POST",
       body: dbPayload,
       useServiceRole: true,
     });
+
+    if (error && typeof error === "string" && (error.includes("frame_models") || error.includes("frame_model"))) {
+      console.warn("Column frame_models not yet added in Supabase. Falling back to embedded description tag...");
+      const fallbackPayload = { ...dbPayload };
+      delete fallbackPayload.frame_models;
+      delete fallbackPayload.frame_model;
+      if (effectiveFrameModels && effectiveFrameModels.length > 0) {
+        fallbackPayload.description = `<!--frame_models:${JSON.stringify(effectiveFrameModels)}-->\n${fallbackPayload.description || ""}`;
+      }
+      const retryRes = await supabaseQuery<any[]>("products", {
+        method: "POST",
+        body: fallbackPayload,
+        useServiceRole: true,
+      });
+      data = retryRes.data;
+      error = retryRes.error;
+    }
 
     if (error) {
       if (typeof error === "string" && error.includes("products_category_check")) {

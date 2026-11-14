@@ -21,6 +21,8 @@ export type DevotionalProduct = {
   sizes?: Array<ProductOptionVariant | string>;
   colors?: Array<ProductOptionVariant | string>;
   materials?: Array<ProductOptionVariant | string>;
+  frame_models?: Array<ProductOptionVariant | string>;
+  frameModel?: string;
 };
 
 export const devotionalCategories = [
