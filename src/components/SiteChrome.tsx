@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import CartDrawer from "./CartDrawer";
 import AnalyticsTracker from "./AnalyticsTracker";
+import FloatingWhatsApp from "./FloatingWhatsApp";
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
       <main className="flex-grow">{children}</main>
       <CartDrawer />
       <Footer />
+      <FloatingWhatsApp />
     </>
   );
 }

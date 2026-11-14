@@ -26,7 +26,15 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const stored = typeof window === "undefined" ? null : window.localStorage.getItem(STORAGE_KEY);
-      setSettings(stored ? JSON.parse(stored) as SettingsMap : {});
+      if (stored) {
+        const cleaned = stored.replace(/8122228386|81222\s*28386|\+91\s*81222\s*28386|918122228386/g, "90470 44916");
+        try {
+          window.localStorage.setItem(STORAGE_KEY, cleaned);
+        } catch {}
+        setSettings(JSON.parse(cleaned) as SettingsMap);
+      } else {
+        setSettings({});
+      }
     } catch {
       setSettings({});
     } finally {

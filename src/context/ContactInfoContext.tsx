@@ -44,10 +44,15 @@ export function ContactInfoProvider({ children }: { children: ReactNode }) {
       const stored = typeof window === "undefined" ? null : window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as ContactInfo;
-        if (parsed.whatsapp_number === "8122228386") parsed.whatsapp_number = "9047044916";
-        if (parsed.phone_number === "8122228386" || parsed.phone_number === "+91 81222 28386") {
+        if (!parsed.whatsapp_number || /81222/i.test(parsed.whatsapp_number)) {
+          parsed.whatsapp_number = "9047044916";
+        }
+        if (!parsed.phone_number || /81222/i.test(parsed.phone_number)) {
           parsed.phone_number = "90470 44916";
         }
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        } catch {}
         setContactInfo({ ...DEFAULT_CONTACT_INFO, ...parsed });
       } else {
         setContactInfo(DEFAULT_CONTACT_INFO);

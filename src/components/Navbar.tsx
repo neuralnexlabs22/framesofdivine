@@ -69,7 +69,15 @@ export default function Navbar() {
       <header className={`fixed left-0 top-0 z-50 w-full transition-cinematic ${isSolid ? "py-3 bg-[#f4f0e8]/95 shadow-md border-b border-black-deep/10 backdrop-blur-lg text-black-deep" : "py-4 bg-transparent border-b border-transparent text-white"}`}>
         {announcementEnabled && (
           <div className={`hidden border-b px-4 py-2 text-center text-[10px] uppercase tracking-[0.18em] transition-colors md:block ${isSolid ? "border-black-deep/10 text-black-deep/70" : "border-white/20 text-white/95"}`}>
-            {announcementText}
+            <a
+              href="https://wa.me/919047044916?text=Namaste!%20I%20am%20interested%20in%20traditional%20god%20photo%20paintings."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#c9a227] transition-colors inline-block"
+              title="Chat on WhatsApp: 90470 44916"
+            >
+              {announcementText}
+            </a>
           </div>
         )}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
