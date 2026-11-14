@@ -577,16 +577,29 @@ export default function CartDrawer() {
                 <p className="text-xs text-zinc-300">
                   Our team will contact you via WhatsApp to confirm framing details and dispatch timing.
                 </p>
-                <button
-                  onClick={() => {
-                    setShowCheckoutModal(false);
-                    setOrderSuccess(null);
-                    closeCart();
-                  }}
-                  className="mt-4 bg-[#c9a227] text-black font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl hover:brightness-110"
-                >
-                  Continue Shopping
-                </button>
+                <div className="flex flex-col gap-2 pt-2">
+                  <a
+                    href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      `*🕉️ PAID ORDER NOTIFICATION — FRAMES OF DIVINE*\n\nOrder ID: *${orderSuccess}*\nPayment Status: *Captured via Razorpay*\nCustomer: *${customerName.trim()}*\nPhone: *${customerPhone.trim()}*\nAddress: *${customerAddress.trim()}*\nTotal Paid: *₹${finalTotal.toLocaleString("en-IN")}*\n\nHello, I have completed the online payment for my order. Please confirm dispatch timeline. Thank you! 🙏`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-xl hover:brightness-110 transition-all shadow-md"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Send Order Copy to Admin WhatsApp</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setShowCheckoutModal(false);
+                      setOrderSuccess(null);
+                      closeCart();
+                    }}
+                    className="w-full bg-[#c9a227] text-black font-black uppercase tracking-widest text-xs px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
               </div>
             ) : (
               <>
