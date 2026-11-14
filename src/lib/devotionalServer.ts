@@ -129,6 +129,35 @@ export async function getDevotionalCategoriesAsync(): Promise<
   return result;
 }
 
+function slugifyCategory(cat: string): string {
+  return (cat || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function isCategoryMatch(productCategory: string, selectedSlug: string): boolean {
+  if (!selectedSlug || selectedSlug === "all") return true;
+
+  const targetSlug = slugifyCategory(selectedSlug);
+  const prodCat = (productCategory || "").toLowerCase().trim();
+  const prodCatSlug = slugifyCategory(prodCat);
+
+  // Exact match by name or by normalized slug
+  if (prodCatSlug === targetSlug || prodCat === selectedSlug.toLowerCase().trim()) {
+    return true;
+  }
+
+  // Standard preset category aliases (only for standard 4 categories)
+  if (targetSlug === "deity-prints" && prodCatSlug.includes("deity")) return true;
+  if (targetSlug === "temple-prints" && prodCatSlug.includes("temple")) return true;
+  if (targetSlug === "sculpture-prints" && prodCatSlug.includes("sculpture")) return true;
+  if (targetSlug === "premium-sets" && (prodCatSlug.includes("premium") || prodCatSlug.includes("set"))) return true;
+
+  return false;
+}
+
 export async function getDevotionalProductsAsync(
   categorySlug?: string
 ): Promise<DevotionalProduct[]> {
@@ -164,21 +193,8 @@ export async function getDevotionalProductsAsync(
     return allProducts;
   }
 
-  const cleanCat = categorySlug.toLowerCase().trim();
-  const slugCat = cleanCat.replace(/\s+/g, "-");
-  return allProducts.filter((product) => {
-    const cat = product.category.toLowerCase().trim();
-    const catSlug = cat.replace(/\s+/g, "-");
-    return (
-      cat === cleanCat ||
-      catSlug === slugCat ||
-      cat.includes(cleanCat) ||
-      cleanCat.includes(cat) ||
-      (cleanCat === "deity-prints" && cat.includes("deity")) ||
-      (cleanCat === "temple-prints" && cat.includes("temple")) ||
-      (cleanCat === "sculpture-prints" && cat.includes("sculpture")) ||
-      (cleanCat === "premium-sets" && cat.includes("set"))
-    );
-  });
+  return allProducts.filter((product) =>
+    isCategoryMatch(product.category, categorySlug)
+  );
 }
 

@@ -12,6 +12,35 @@ interface ShopProductGridProps {
   categories: { slug: string; name: string }[];
 }
 
+function slugifyCategory(cat: string): string {
+  return (cat || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function isCategoryMatch(productCategory: string, selectedSlug: string): boolean {
+  if (!selectedSlug || selectedSlug === "all") return true;
+
+  const targetSlug = slugifyCategory(selectedSlug);
+  const prodCat = (productCategory || "").toLowerCase().trim();
+  const prodCatSlug = slugifyCategory(prodCat);
+
+  // Exact match by name or by normalized slug
+  if (prodCatSlug === targetSlug || prodCat === selectedSlug.toLowerCase().trim()) {
+    return true;
+  }
+
+  // Standard preset category aliases (only for standard 4 categories)
+  if (targetSlug === "deity-prints" && prodCatSlug.includes("deity")) return true;
+  if (targetSlug === "temple-prints" && prodCatSlug.includes("temple")) return true;
+  if (targetSlug === "sculpture-prints" && prodCatSlug.includes("sculpture")) return true;
+  if (targetSlug === "premium-sets" && (prodCatSlug.includes("premium") || prodCatSlug.includes("set"))) return true;
+
+  return false;
+}
+
 export default function ShopProductGrid({ initialProducts, categories }: ShopProductGridProps) {
   const { products: liveProducts, loaded } = useProducts();
   const { categories: catalogCategories } = useCatalog();
@@ -76,17 +105,7 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
   const filteredAndSorted = useMemo(() => {
     return effectiveProducts
       .filter((product) => {
-        const targetCat = selectedCategory.toLowerCase();
-        const prodCat = product.category.toLowerCase();
-        const matchesCategory =
-          selectedCategory === "all" ||
-          prodCat.includes(targetCat) ||
-          prodCat.replace(/\s+/g, "-") === targetCat ||
-          (product.badge && product.badge.toLowerCase().includes(targetCat)) ||
-          (targetCat === "deity-prints" && prodCat.includes("deity")) ||
-          (targetCat === "temple-prints" && prodCat.includes("temple")) ||
-          (targetCat === "sculpture-prints" && prodCat.includes("sculpture")) ||
-          (targetCat === "premium-sets" && prodCat.includes("set"));
+        const matchesCategory = isCategoryMatch(product.category, selectedCategory);
 
         const query = search.trim().toLowerCase();
         const matchesSearch =
