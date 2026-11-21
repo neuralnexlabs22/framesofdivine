@@ -18,44 +18,33 @@ export default async function ShopPage() {
 
   return (
     <div className="theme-light min-h-screen pt-28">
-      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:items-center">
-        <div>
-          <p className="eyebrow text-black-deep/60">God Photo Shop</p>
-          <h1 className="section-title text-black-deep">
-            Devotional Paintings For Home, Pooja Room, And Gifting
-          </h1>
-          <p className="mt-7 max-w-2xl text-sm leading-8 text-black-charcoal/72">
-            Shop authentic 22KT gold Tanjore paintings, sacred temple artwork,
-            and curated pooja room sanctum collections.
-          </p>
-          <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="#products"
-              className="inline-flex w-fit items-center gap-3 border border-black-deep px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:bg-black-deep hover:text-white"
-            >
-              Shop Paintings <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex w-fit items-center gap-3 border border-black-deep/25 px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:border-black-deep"
-            >
-              Custom Order
-            </Link>
+      {/* SECTION 1 — SACRED DEVOTIONAL PAINTINGS (Catalog, Search, Filters, Products Grid) */}
+      <section id="products" className="section-pad px-4 md:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <p className="eyebrow text-black-deep/60">Featured Products</p>
+              <h1 className="section-title text-black-deep">
+                Sacred Devotional Paintings
+              </h1>
+            </div>
+            <p className="max-w-lg text-sm leading-7 text-black-charcoal/70">
+              Browse divine deities, architectural temple wonders, and sanctum
+              wall artwork with search, category filtering, and sorting.
+            </p>
           </div>
-        </div>
-        <div className="relative min-h-[520px] overflow-hidden border border-black-deep/15">
-          <Image
-            src={devotionalAssets.hero.src}
-            alt={devotionalAssets.hero.alt}
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 55vw"
-            className="object-cover"
+          <ShopProductGrid
+            initialProducts={products}
+            categories={categories.map((c) => ({
+              slug: c.slug,
+              name: c.name,
+            }))}
           />
         </div>
       </section>
 
-      <section className="px-4 py-16 md:px-8 bg-[#ede7db] text-black-deep">
+      {/* SECTION 2 — SHOP BY DEVOTIONAL CATEGORY (Collections) */}
+      <section className="px-4 py-20 md:px-8 bg-[#ede7db] border-y border-black-deep/10 text-black-deep">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 flex items-end justify-between gap-6">
             <div>
@@ -97,26 +86,40 @@ export default async function ShopPage() {
         </div>
       </section>
 
-      <section id="products" className="section-pad px-4 md:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="eyebrow text-black-deep/60">Featured Products</p>
-              <h2 className="section-title text-black-deep">
-                Sacred Devotional Paintings
-              </h2>
-            </div>
-            <p className="max-w-lg text-sm leading-7 text-black-charcoal/70">
-              Browse divine deities, architectural temple wonders, and sanctum
-              wall artwork with search, category filtering, and sorting.
-            </p>
+      {/* SECTION 3 — DEVOTIONAL PAINTINGS FOR HOME, POOJA ROOM AND GIFTING (Promotional Hero) */}
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-20 md:grid-cols-[0.9fr_1.1fr] md:px-8 md:items-center">
+        <div>
+          <p className="eyebrow text-black-deep/60">God Photo Shop</p>
+          <h2 className="section-title text-black-deep">
+            Devotional Paintings For Home, Pooja Room, And Gifting
+          </h2>
+          <p className="mt-7 max-w-2xl text-sm leading-8 text-black-charcoal/72">
+            Shop authentic 22KT gold Tanjore paintings, sacred temple artwork,
+            and curated pooja room sanctum collections.
+          </p>
+          <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+            <Link
+              href="#products"
+              className="inline-flex w-fit items-center gap-3 border border-black-deep px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:bg-black-deep hover:text-white"
+            >
+              Shop Paintings <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/custom-order"
+              className="inline-flex w-fit items-center gap-3 border border-black-deep/25 px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] transition-cinematic hover:border-black-deep"
+            >
+              Custom Order
+            </Link>
           </div>
-          <ShopProductGrid
-            initialProducts={products}
-            categories={categories.map((c) => ({
-              slug: c.slug,
-              name: c.name,
-            }))}
+        </div>
+        <div className="relative min-h-[520px] overflow-hidden border border-black-deep/15">
+          <Image
+            src={devotionalAssets.hero.src}
+            alt={devotionalAssets.hero.alt}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 55vw"
+            className="object-cover"
           />
         </div>
       </section>
