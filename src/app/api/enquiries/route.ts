@@ -14,6 +14,7 @@ export interface CustomEnquiry {
   customer_name: string;
   phone: string;
   email?: string;
+  address?: string;
   requested_deity: string;
   dimensions: string;
   frame_preference: string;
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       customer_name,
       phone,
       email = "",
+      address = "",
       requested_deity,
       dimensions = "16 x 24 in",
       frame_preference = "Teak Wood Frame",
@@ -84,6 +86,7 @@ export async function POST(request: NextRequest) {
       customer_name: customer_name.trim(),
       phone: phone.trim(),
       email: email ? email.trim() : "",
+      address: address ? address.trim() : "",
       requested_deity: requested_deity.trim(),
       dimensions: dimensions ? dimensions.trim() : "16 x 24 in",
       frame_preference: frame_preference ? frame_preference.trim() : "Teak Wood Frame",

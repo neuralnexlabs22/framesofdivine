@@ -14,6 +14,7 @@ import {
   Layers,
   Ruler,
   HelpCircle,
+  MapPin,
 } from "lucide-react";
 import { uploadAdminImage } from "@/lib/imageUpload";
 import { useContactInfo } from "@/context/ContactInfoContext";
@@ -25,6 +26,7 @@ export default function CustomOrderPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
   const [deity, setDeity] = useState("");
   const [dimensions, setDimensions] = useState("16 x 24 in");
   const [frame, setFrame] = useState("Teak Wood Frame");
@@ -51,8 +53,8 @@ export default function CustomOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim() || !deity.trim()) {
-      alert("Please enter your name, phone number, and requested deity/artwork.");
+    if (!name.trim() || !phone.trim() || !address.trim() || !deity.trim()) {
+      alert("Please enter your name, phone number, delivery address, and requested deity/artwork.");
       return;
     }
 
@@ -62,6 +64,7 @@ export default function CustomOrderPage() {
         customer_name: name.trim(),
         phone: phone.trim(),
         email: email.trim(),
+        address: address.trim(),
         requested_deity: deity.trim(),
         dimensions,
         frame_preference: frame,
@@ -96,6 +99,7 @@ export default function CustomOrderPage() {
     msg += `*Customer Name:* ${name.trim() || "Devotee"}\n`;
     msg += `*Contact Phone:* ${phone.trim()}\n`;
     if (email) msg += `*Email:* ${email.trim()}\n`;
+    if (address) msg += `*Delivery Address:* ${address.trim()}\n`;
     msg += `*Requested Deity / Theme:* ${deity.trim()}\n`;
     msg += `*Desired Dimensions:* ${dimensions}\n`;
     msg += `*Frame / Finish:* ${frame}\n`;
@@ -108,27 +112,39 @@ export default function CustomOrderPage() {
 
   return (
     <div className="theme-light min-h-screen pt-28">
-      {/* Hero Header */}
-      <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
+      {/* Top Header & Breadcrumbs */}
+      <section className="mx-auto max-w-5xl px-4 pt-4 pb-8 md:px-8">
         <Link
           href="/shop"
-          className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Shop
         </Link>
-        <p className="eyebrow text-grey-stone">Custom Devotional Commissions</p>
-        <div className="max-w-4xl">
-          <h1 className="section-title text-black-deep">Bespoke Devotional Tanjore Paintings & Sanctum Sets</h1>
-          <p className="mt-6 text-sm leading-8 text-black-charcoal/75 max-w-3xl">
-            Whether you desire a specific ancestral deity, custom pooja room dimensions, rare sacred temple sanctum photography, or 22KT gold foil finishing, our master artisans curate each bespoke devotional commission with reverent craftsmanship.
-          </p>
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-black-deep/10 pb-8">
+          <div>
+            <p className="eyebrow text-grey-stone">Custom Devotional Commissions</p>
+            <h1 className="section-title text-black-deep mt-2">
+              Devotional Photo Request Form
+            </h1>
+            <p className="mt-3 text-sm text-black-charcoal/75 max-w-2xl leading-relaxed">
+              Fill in your custom specifications below. Custom pooja room sizing, 22KT gold foil accents, and insured pan-India delivery available.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSendViaWhatsApp}
+            className="self-start md:self-end shrink-0 inline-flex items-center gap-2 border border-[#25D366] bg-[#25D366]/10 text-green-800 px-5 py-3 text-xs font-bold uppercase tracking-wider hover:bg-[#25D366] hover:text-white transition-all shadow-sm"
+          >
+            <MessageSquare className="h-4 w-4 text-[#25D366]" />
+            Quick WhatsApp Enquiry
+          </button>
         </div>
       </section>
 
-      {/* Main Grid: Form + Features */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 md:px-8 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-start">
-        {/* Enquiry Form */}
-        <div className="border border-black-deep/15 bg-white-pure p-8 md:p-10 shadow-lg">
+      {/* SECTION 1 — CUSTOM ORDER FORM (TOP) */}
+      <section className="mx-auto max-w-5xl px-4 pb-20 md:px-8">
+        <div className="border border-black-deep/15 bg-white-pure p-8 md:p-12 shadow-lg">
           {submittedId ? (
             <div className="py-12 text-center space-y-5">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-[#c9a227]/10 border border-[#c9a227]/30 flex items-center justify-center text-[#c9a227]">
@@ -159,11 +175,11 @@ export default function CustomOrderPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <h3 className="font-serif text-2xl uppercase tracking-wider text-black-deep">
-                  Devotional Photo Request Form
-                </h3>
+                <h2 className="font-serif text-2xl uppercase tracking-wider text-black-deep">
+                  Devotional Photo & Sanctum Specifications
+                </h2>
                 <p className="text-xs text-grey-stone mt-1">
-                  Fill in your custom specifications below. All orders include insured packaging.
+                  Provide your deity details and delivery address below. We prepare custom mockups prior to crafting.
                 </p>
               </div>
 
@@ -198,17 +214,35 @@ export default function CustomOrderPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
-                  Email Address (optional)
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. devotee@example.com"
-                  className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep"
-                />
+              {/* Email & Delivery Address */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
+                    Email Address (optional)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. devotee@example.com"
+                    className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3 text-[#c9a227]" />
+                    Delivery Address & Pincode *
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="House / Flat No, Street, Landmark, City, State, Pincode"
+                    className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep resize-none"
+                  />
+                </div>
               </div>
 
               {/* Deity / Artwork Name */}
@@ -323,58 +357,91 @@ export default function CustomOrderPage() {
             </form>
           )}
         </div>
+      </section>
 
-        {/* Informational Pillars */}
-        <div className="space-y-6">
-          <div className="border border-ornamental p-7 bg-white-pure">
-            <Sparkles className="w-6 h-6 text-[#c9a227] mb-3" />
-            <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
-              How Custom Devotional Orders Work
-            </h3>
-            <ul className="mt-4 space-y-3 text-xs leading-relaxed text-black-charcoal/75">
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[#c9a227]">1.</span>
-                <span>Submit your deity preferences, wall dimensions, and framing requests.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[#c9a227]">2.</span>
-                <span>Our curator prepares high-resolution digital mockups with custom sizing.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[#c9a227]">3.</span>
-                <span>Upon approval, paintings are prepared using museum archival inks and seasoned teak wood.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[#c9a227]">4.</span>
-                <span>Shipped in reinforced protective wooden casing with pan-India insured transit.</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="border border-ornamental p-7 bg-white-pure">
-            <Ruler className="w-6 h-6 text-[#c9a227] mb-3" />
-            <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
-              Pooja Room & Temple Wall Sizing
-            </h3>
-            <p className="mt-3 text-xs leading-6 text-black-charcoal/75">
-              Need custom measurements to fit an exact pooja mandap or ancestral niche? We support custom aspect ratios from 1:1 square sanctum icons to panoramic 1:3 temple gopuram corridor vistas.
+      {/* SECTION 2 — INFORMATIONAL CONTENT & CRAFTSMANSHIP (MOVED DOWN) */}
+      <section className="border-t border-black-deep/10 bg-[#fbf9f4] py-20">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          {/* Section Story Header */}
+          <div className="max-w-3xl mb-14">
+            <p className="eyebrow text-grey-stone">Sanctum Craftsmanship & Bespoke Sizing</p>
+            <h2 className="section-title text-black-deep mt-2">
+              Bespoke Devotional Tanjore Paintings & Sanctum Sets
+            </h2>
+            <p className="mt-4 text-sm leading-8 text-black-charcoal/75">
+              Whether you desire a specific ancestral deity, custom pooja room dimensions, rare sacred temple sanctum photography, or 22KT gold foil finishing, our master artisans curate each bespoke devotional commission with reverent craftsmanship.
             </p>
           </div>
 
-          <div className="border border-ornamental p-7 bg-white-pure">
-            <MessageSquare className="w-6 h-6 text-[#c9a227] mb-3" />
-            <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
-              Need Immediate Guidance?
-            </h3>
-            <p className="mt-2 text-xs leading-6 text-black-charcoal/75">
-              Chat directly with our curation team on WhatsApp for prompt sizing recommendations and sample paintings.
-            </p>
-            <button
-              onClick={handleSendViaWhatsApp}
-              className="mt-4 inline-flex items-center gap-2 border border-black-deep px-5 py-2.5 text-xs uppercase font-bold tracking-wider hover:bg-black-deep hover:text-white transition-colors"
-            >
-              <MessageSquare className="w-3.5 h-3.5" /> WhatsApp: {whatsappNumber}
-            </button>
+          {/* 3 Informational Pillars in 3-column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            {/* Pillar 1 */}
+            <div className="border border-ornamental p-8 bg-white-pure shadow-sm flex flex-col justify-between">
+              <div>
+                <Sparkles className="w-6 h-6 text-[#c9a227] mb-3" />
+                <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
+                  How Custom Devotional Orders Work
+                </h3>
+                <ul className="mt-5 space-y-3.5 text-xs leading-relaxed text-black-charcoal/75">
+                  <li className="flex items-start gap-2.5">
+                    <span className="font-bold text-[#c9a227] text-sm">1.</span>
+                    <span>Submit your deity preferences, dimensions, framing, and delivery address.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="font-bold text-[#c9a227] text-sm">2.</span>
+                    <span>Our curator prepares high-resolution digital mockups with custom sizing.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="font-bold text-[#c9a227] text-sm">3.</span>
+                    <span>Upon approval, paintings are crafted using museum archival inks and seasoned teak wood.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="font-bold text-[#c9a227] text-sm">4.</span>
+                    <span>Shipped in reinforced protective wooden casing with pan-India insured transit.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="border border-ornamental p-8 bg-white-pure shadow-sm flex flex-col justify-between">
+              <div>
+                <Ruler className="w-6 h-6 text-[#c9a227] mb-3" />
+                <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
+                  Pooja Room & Temple Wall Sizing
+                </h3>
+                <p className="mt-4 text-xs leading-6 text-black-charcoal/75">
+                  Need custom measurements to fit an exact pooja mandap or ancestral niche? We support custom aspect ratios from 1:1 square sanctum icons to panoramic 1:3 temple gopuram corridor vistas.
+                </p>
+                <div className="mt-6 border-t border-black-deep/10 pt-4 space-y-2 text-[11px] text-black-charcoal/70">
+                  <p className="font-bold text-black-deep">Popular Sanctum Dimensions:</p>
+                  <p>• 12 × 18 in (Compact Pooja Mandap)</p>
+                  <p>• 16 × 24 in (Standard Classic)</p>
+                  <p>• 20 × 30 in (Grand Sanctum Wall)</p>
+                  <p>• 24 × 36 in (Temple Collector Gallery)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="border border-ornamental p-8 bg-white-pure shadow-sm flex flex-col justify-between">
+              <div>
+                <MessageSquare className="w-6 h-6 text-[#c9a227] mb-3" />
+                <h3 className="font-serif text-xl uppercase tracking-wider text-black-deep">
+                  Need Immediate Guidance?
+                </h3>
+                <p className="mt-4 text-xs leading-6 text-black-charcoal/75">
+                  Chat directly with our curation team on WhatsApp for prompt sizing recommendations, wood finish samples, and personalized custom quotes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSendViaWhatsApp}
+                className="mt-6 w-full inline-flex items-center justify-center gap-2 border border-black-deep bg-white-pure px-5 py-3 text-xs uppercase font-bold tracking-wider text-black-deep hover:bg-black-deep hover:text-white transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-green-600" /> WhatsApp: {whatsappNumber}
+              </button>
+            </div>
           </div>
         </div>
       </section>

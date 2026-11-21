@@ -23,16 +23,23 @@ export async function PUT(
     const { id } = await props.params;
     const body = await request.json();
 
-    const { data: rows } = await supabaseQuery<any[]>("site_settings", {
-      query: `setting_key=eq.custom_devotional_enquiries&select=*`,
+    // Query site_settings
+    let { data: rows } = await supabaseQuery<any[]>("site_settings", {
+      query: `key=eq.custom_devotional_enquiries&select=*`,
       useServiceRole: true,
     });
 
-    if (!rows || !rows[0]?.setting_value?.enquiries) {
-      return NextResponse.json({ error: "No enquiries found" }, { status: 404 });
+    if (!rows || rows.length === 0) {
+      const fallback = await supabaseQuery<any[]>("site_settings", {
+        query: `setting_key=eq.custom_devotional_enquiries&select=*`,
+        useServiceRole: true,
+      });
+      rows = fallback.data;
     }
 
-    const currentList: CustomEnquiry[] = rows[0].setting_value.enquiries;
+    const currentList: CustomEnquiry[] =
+      rows?.[0]?.value?.enquiries || rows?.[0]?.setting_value?.enquiries || [];
+
     const index = currentList.findIndex((e) => e.id === id);
     if (index === -1) {
       return NextResponse.json({ error: "Enquiry not found" }, { status: 404 });
@@ -44,13 +51,16 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     };
 
+    const hasKeyCol = rows?.[0]?.key !== undefined;
+    const queryCol = hasKeyCol ? "key" : "setting_key";
+    const valObj = { enquiries: currentList };
+
     await supabaseQuery("site_settings", {
       method: "PATCH",
-      query: `setting_key=eq.custom_devotional_enquiries`,
-      body: {
-        setting_value: { enquiries: currentList },
-        updated_at: new Date().toISOString(),
-      },
+      query: `${queryCol}=eq.custom_devotional_enquiries`,
+      body: hasKeyCol
+        ? { value: valObj, updated_at: new Date().toISOString() }
+        : { setting_value: valObj, updated_at: new Date().toISOString() },
     });
 
     return NextResponse.json({ success: true, enquiry: currentList[index] });
@@ -74,25 +84,34 @@ export async function DELETE(
 
     const { id } = await props.params;
 
-    const { data: rows } = await supabaseQuery<any[]>("site_settings", {
-      query: `setting_key=eq.custom_devotional_enquiries&select=*`,
+    let { data: rows } = await supabaseQuery<any[]>("site_settings", {
+      query: `key=eq.custom_devotional_enquiries&select=*`,
       useServiceRole: true,
     });
 
-    if (!rows || !rows[0]?.setting_value?.enquiries) {
-      return NextResponse.json({ error: "No enquiries found" }, { status: 404 });
+    if (!rows || rows.length === 0) {
+      const fallback = await supabaseQuery<any[]>("site_settings", {
+        query: `setting_key=eq.custom_devotional_enquiries&select=*`,
+        useServiceRole: true,
+      });
+      rows = fallback.data;
     }
 
-    const currentList: CustomEnquiry[] = rows[0].setting_value.enquiries;
+    const currentList: CustomEnquiry[] =
+      rows?.[0]?.value?.enquiries || rows?.[0]?.setting_value?.enquiries || [];
+
     const filteredList = currentList.filter((e) => e.id !== id);
+
+    const hasKeyCol = rows?.[0]?.key !== undefined;
+    const queryCol = hasKeyCol ? "key" : "setting_key";
+    const valObj = { enquiries: filteredList };
 
     await supabaseQuery("site_settings", {
       method: "PATCH",
-      query: `setting_key=eq.custom_devotional_enquiries`,
-      body: {
-        setting_value: { enquiries: filteredList },
-        updated_at: new Date().toISOString(),
-      },
+      query: `${queryCol}=eq.custom_devotional_enquiries`,
+      body: hasKeyCol
+        ? { value: valObj, updated_at: new Date().toISOString() }
+        : { setting_value: valObj, updated_at: new Date().toISOString() },
     });
 
     return NextResponse.json({ success: true });

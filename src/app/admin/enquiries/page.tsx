@@ -93,6 +93,7 @@ export default function AdminEnquiriesPage() {
       e.customer_name.toLowerCase().includes(search.toLowerCase()) ||
       e.requested_deity.toLowerCase().includes(search.toLowerCase()) ||
       e.phone.toLowerCase().includes(search.toLowerCase()) ||
+      (e.address && e.address.toLowerCase().includes(search.toLowerCase())) ||
       (e.dimensions && e.dimensions.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = statusFilter === "all" ? true : e.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -224,6 +225,7 @@ export default function AdminEnquiriesPage() {
               <thead className="border-b border-white/5 text-[10px] uppercase tracking-wider text-zinc-400 font-bold bg-white/[0.01]">
                 <tr>
                   <th className="px-5 py-4">Customer Details</th>
+                  <th className="px-5 py-4">Delivery Address</th>
                   <th className="px-5 py-4">Requested Deity / Theme</th>
                   <th className="px-5 py-4">Size & Framing</th>
                   <th className="px-5 py-4">Date</th>
@@ -238,6 +240,9 @@ export default function AdminEnquiriesPage() {
                       <p className="font-semibold text-white">{enquiry.customer_name}</p>
                       <p className="text-xs text-[#c9a227] font-mono mt-0.5">{enquiry.phone}</p>
                       {enquiry.email && <p className="text-[11px] text-zinc-500">{enquiry.email}</p>}
+                    </td>
+                    <td className="px-5 py-4 text-xs text-zinc-300 max-w-[200px]">
+                      <p className="line-clamp-2 text-zinc-300">{enquiry.address || "—"}</p>
                     </td>
                     <td className="px-5 py-4">
                       <p className="font-semibold text-white max-w-[220px]">{enquiry.requested_deity}</p>
@@ -370,6 +375,17 @@ export default function AdminEnquiriesPage() {
                     <span className="text-zinc-300 font-semibold">{selectedEnquiry.frame_preference}</span>
                   </div>
                 </div>
+
+                {selectedEnquiry.address && (
+                  <div className="space-y-1">
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-bold">
+                      Delivery Address & Pincode
+                    </span>
+                    <p className="text-zinc-200 bg-black border border-white/5 p-3 rounded-xl leading-relaxed whitespace-pre-wrap">
+                      {selectedEnquiry.address}
+                    </p>
+                  </div>
+                )}
 
                 {selectedEnquiry.customization_details && (
                   <div className="space-y-1">
