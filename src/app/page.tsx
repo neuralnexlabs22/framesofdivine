@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { devotionalAssets } from "@/data/devotional";
-import { devotionalProducts } from "@/data/devotionalProducts";
+import { devotionalCategories, devotionalProducts } from "@/data/devotionalProducts";
 import DevotionalProductCard from "@/components/DevotionalProductCard";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
 import { useHomepageContent } from "@/context/HomepageContentContext";
@@ -98,6 +98,55 @@ export default function HomePage() {
               </Link>
             </motion.div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* CATEGORIES SECTION - SHOP BY DEVOTIONAL CATEGORY */}
+      <section className="px-4 py-16 md:px-8 bg-[#ede7db] border-b border-black-deep/10 text-black-deep">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow text-[#c9a227] font-bold">Divine Collections</p>
+              <h2 className="font-serif text-3xl md:text-4xl uppercase text-black-deep">
+                Shop By Devotional Category
+              </h2>
+            </div>
+            <Link
+              href="/shop"
+              className="inline-flex w-fit items-center gap-2 text-xs uppercase tracking-[0.2em] font-semibold text-black-deep hover:text-[#c9a227] transition-colors"
+            >
+              All Categories <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid gap-5 grid-cols-2 lg:grid-cols-4">
+            {devotionalCategories.map((category) => (
+              <Link
+                key={category.slug}
+                href={`/shop/${category.slug}`}
+                className="group relative block border border-black-deep/15 bg-black overflow-hidden rounded-xl shadow-md hover:border-[#c9a227] transition-all"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden">
+                  <Image
+                    src={category.image || devotionalAssets.deityMontage.src}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-[1200ms] group-hover:scale-110 opacity-85 group-hover:opacity-100"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                  <div className="absolute bottom-0 p-4 sm:p-5">
+                    <Sparkles className="mb-2 h-4 w-4 text-[#c9a227]" />
+                    <h3 className="font-serif text-lg sm:text-2xl text-white font-medium drop-shadow-md">
+                      {category.name}
+                    </h3>
+                    <p className="mt-1 text-[11px] sm:text-xs leading-4 sm:leading-5 text-zinc-300 line-clamp-2 drop-shadow">
+                      {category.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
