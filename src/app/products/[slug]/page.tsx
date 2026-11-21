@@ -110,7 +110,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
                 Related Devotional Paintings
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 items-stretch">
               {relatedProducts.map((rel) => (
                 <DevotionalProductCard key={rel.id} product={rel} />
               ))}

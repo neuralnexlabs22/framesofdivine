@@ -103,7 +103,7 @@ export default function BrandPage({
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         {sortedProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 items-stretch">
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -176,7 +176,7 @@ export default function HomePage() {
               }
             `}</style>
             {displayProducts.slice(0, 8).map((product) => (
-              <div key={product.id} className="min-w-[260px] md:min-w-[300px] shrink-0 snap-start">
+              <div key={product.id} className="w-[260px] sm:w-[280px] md:w-[300px] shrink-0 snap-start flex flex-col items-stretch">
                 <DevotionalProductCard product={product} />
               </div>
             ))}
