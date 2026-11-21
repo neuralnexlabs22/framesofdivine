@@ -9,7 +9,6 @@ const links = [
   ["Hindu Deities", "/hindu-deities"],
   ["Sacred Temples", "/sacred-temples"],
   ["Sacred Sculptures", "/sacred-sculptures"],
-  ["Sacred Heritage", "/sacred-heritage"],
   ["About", "/about"],
   ["Contact", "/contact"],
 ];
@@ -32,11 +31,17 @@ export default function Footer() {
           ))}
         </nav>
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-grey-stone">Studio & Orders</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-grey-stone font-bold">STUDIO & ORDERS</p>
           <p className="mt-4 text-sm leading-7 text-black-charcoal/70">
             Handcrafted Tanjore Paintings & Devotional Frames. Custom pooja room sizing available.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <Link
+              href="/custom-order"
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black-deep hover:text-[#c9a227] transition-colors underline underline-offset-4"
+            >
+              Custom Order →
+            </Link>
             <a
               href="https://wa.me/919047044916?text=Namaste!%20I%20have%20an%20inquiry%20regarding%20devotional%20artworks."
               target="_blank"

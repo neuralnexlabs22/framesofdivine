@@ -27,6 +27,12 @@ export default function AdminHomepagePage() {
     title: "FEATURED DEVOTIONAL PRINTS",
   });
 
+  const [studioOrdersContent, setStudioOrdersContent] = useState({
+    enabled: true,
+    heading: "STUDIO & ORDERS",
+    description: "Handcrafted Tanjore Paintings & Devotional Frames. Custom pooja room sizing available.",
+  });
+
   const [brandPillarsContent, setBrandPillarsContent] = useState({
     enabled: true,
   });
@@ -42,6 +48,9 @@ export default function AdminHomepagePage() {
       const trending = getSection("trending");
       if (trending) setTrendingContent(trending as typeof trendingContent);
 
+      const studioOrders = getSection("studio_orders");
+      if (studioOrders) setStudioOrdersContent(studioOrders as typeof studioOrdersContent);
+
       const brandPillars = getSection("brand_pillars");
       if (brandPillars) setBrandPillarsContent(brandPillars as typeof brandPillarsContent);
     }
@@ -56,6 +65,7 @@ export default function AdminHomepagePage() {
         updateSection("hero", heroContent),
         updateSection("categories", categoriesContent),
         updateSection("trending", trendingContent),
+        updateSection("studio_orders", studioOrdersContent),
         updateSection("brand_pillars", brandPillarsContent),
       ]);
 
@@ -244,6 +254,50 @@ export default function AdminHomepagePage() {
           />
           <label htmlFor="trending-enabled" className="text-sm text-white">
             Enable Trending Section
+          </label>
+        </div>
+      </div>
+
+      {/* Studio & Orders Section */}
+      <div className="bg-[#070707] border border-white/5 rounded-2xl p-6 space-y-4">
+        <h2 className="text-xl font-serif font-bold uppercase tracking-wider text-white">
+          Studio & Orders Section
+        </h2>
+        
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+            Section Heading
+          </label>
+          <input
+            type="text"
+            value={studioOrdersContent.heading}
+            onChange={(e) => setStudioOrdersContent({ ...studioOrdersContent, heading: e.target.value })}
+            className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:border-[#c9a227] focus:outline-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+            Description
+          </label>
+          <textarea
+            rows={3}
+            value={studioOrdersContent.description}
+            onChange={(e) => setStudioOrdersContent({ ...studioOrdersContent, description: e.target.value })}
+            className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:border-[#c9a227] focus:outline-none resize-none"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="studio-orders-enabled"
+            checked={studioOrdersContent.enabled}
+            onChange={(e) => setStudioOrdersContent({ ...studioOrdersContent, enabled: e.target.checked })}
+            className="w-5 h-5 rounded border-white/10 bg-black text-[#c9a227] focus:ring-[#c9a227]"
+          />
+          <label htmlFor="studio-orders-enabled" className="text-sm text-white">
+            Enable Studio & Orders Section
           </label>
         </div>
       </div>

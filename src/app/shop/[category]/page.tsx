@@ -24,7 +24,7 @@ export default async function CategoryShopPage(
     slug: category,
     name: category
       .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase()),
+      .replace(/\b\w/g, (c: string) => c.toUpperCase()),
     description: `Devotional paintings and artworks for ${category.replace(
       /-/g,
       " "

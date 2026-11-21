@@ -16,7 +16,6 @@ const navLinks = [
   { name: "Shop", href: "/shop" },
   { name: "Custom Order", href: "/custom-order" },
   { name: "Reviews", href: "/reviews" },
-  { name: "Heritage", href: "/sacred-heritage" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
 ];

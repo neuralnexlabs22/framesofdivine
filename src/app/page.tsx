@@ -29,6 +29,9 @@ export default function HomePage() {
 
   const { getSection } = useHomepageContent();
   const heroConfig = getSection("hero") as { title?: string; subtitle?: string } | undefined;
+  const studioOrdersConfig = getSection("studio_orders") as
+    | { heading?: string; description?: string; enabled?: boolean }
+    | undefined;
 
   const { products: liveProducts, loaded } = useProducts();
   const displayProducts = (loaded && liveProducts.length > 0)
@@ -186,6 +189,65 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* STUDIO & ORDERS SECTION */}
+      {studioOrdersConfig?.enabled !== false && (
+        <section id="studio-orders-section" className="border-b border-black-deep/10 bg-[#ede7db] px-4 py-20 text-black-deep md:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-12 md:grid-cols-2 md:items-center">
+              <div>
+                <p className="eyebrow text-[#c9a227] font-bold">Custom Devotional Commissions</p>
+                <h2 className="section-title text-black-deep mb-6">
+                  {studioOrdersConfig?.heading || "STUDIO & ORDERS"}
+                </h2>
+                <p className="text-black-charcoal/85 text-lg md:text-xl font-serif leading-relaxed max-w-xl">
+                  {studioOrdersConfig?.description ||
+                    "Handcrafted Tanjore Paintings & Devotional Frames. Custom pooja room sizing available."}
+                </p>
+                <p className="mt-5 text-xs md:text-sm text-black-charcoal/70 leading-relaxed max-w-xl">
+                  Each sanctum artwork is carefully handmade using authentic 22KT gold leaves, traditional limestone relief embossing, Jaipur semi-precious stones, and seasoned teakwood framing. We work closely with devotees and interior architects to curate bespoke sizing for home mandirs, apartment pooja alcoves, and private sanctums.
+                </p>
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/custom-order"
+                    className="inline-flex items-center gap-2.5 bg-black-deep text-white px-7 py-3.5 text-xs font-bold uppercase tracking-[0.2em] transition-all hover:bg-[#c9a227] hover:text-black-deep shadow-lg"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-[#c9a227]" />
+                    Custom Order
+                  </Link>
+                  <a
+                    href="https://wa.me/919047044916?text=Namaste!%20I%20am%20interested%20in%20custom%20pooja%20room%20sizing%20and%20devotional%20frames."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2.5 border border-black-deep/30 bg-white/40 backdrop-blur-sm px-7 py-3.5 text-xs font-bold uppercase tracking-[0.2em] text-black-deep transition-all hover:border-black-deep hover:bg-white"
+                  >
+                    <span className="inline-block w-2 h-2 rounded-full bg-[#25D366]"></span>
+                    Enquire on WhatsApp
+                  </a>
+                </div>
+              </div>
+              <div className="relative min-h-[380px] md:min-h-[440px] overflow-hidden border border-black-deep/15 rounded-2xl shadow-xl bg-black">
+                <Image
+                  src={devotionalAssets.hero.src}
+                  alt="Studio & Orders - Handcrafted Tanjore Paintings & Devotional Frames"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover opacity-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 p-5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-white">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#c9a227]">
+                    Traditional Tanjore Art Studio
+                  </p>
+                  <p className="text-xs text-white/90 font-medium mt-1">
+                    Bespoke pooja room sizes from 13×15 inches to 4×6 feet with authentic 22KT gold leaves & Teakwood frames.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CUSTOMER TESTIMONIALS CAROUSEL */}
       <TestimonialCarousel />
