@@ -22,6 +22,7 @@ import {
   Send,
   Boxes,
   ShoppingBag,
+  Sliders,
 } from "lucide-react";
 import { useState } from "react";
 import { ProductProvider } from "@/context/ProductContext";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders & Payments", icon: ShoppingBag },
   { href: "/admin/products", label: "Devotional Prints", icon: Package },
   { href: "/admin/products/add", label: "Add Print", icon: PlusCircle },
+  { href: "/admin/customizations", label: "Customization Options", icon: Sliders },
   { href: "/admin/inventory", label: "Inventory Stock", icon: Boxes },
   { href: "/admin/categories", label: "Categories", icon: Layers },
   { href: "/admin/brands", label: "Deities & Themes", icon: Tag },

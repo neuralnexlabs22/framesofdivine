@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -15,9 +15,11 @@ import {
   Ruler,
   HelpCircle,
   MapPin,
+  Sliders,
 } from "lucide-react";
 import { uploadAdminImage } from "@/lib/imageUpload";
 import { useContactInfo } from "@/context/ContactInfoContext";
+import type { CustomizationField } from "@/types/customization";
 
 export default function CustomOrderPage() {
   const { contactInfo } = useContactInfo();
@@ -36,6 +38,44 @@ export default function CustomOrderPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+
+  // Dynamic customization fields loaded from database
+  const [dynamicFields, setDynamicFields] = useState<CustomizationField[] | null>(null);
+  const [selectedCustomOptions, setSelectedCustomOptions] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let active = true;
+    const fetchCustomizations = async () => {
+      try {
+        const res = await fetch("/api/customizations?target=custom_order");
+        const json = await res.json();
+        if (active && json.fields && Array.isArray(json.fields) && json.fields.length > 0) {
+          setDynamicFields(json.fields);
+
+          const initialMap: Record<string, string> = {};
+          json.fields.forEach((field: CustomizationField) => {
+            if (field.options && field.options.length > 0) {
+              initialMap[field.label] = field.options[0].label;
+              const slug = field.slug.toLowerCase();
+              if (slug.includes("dimension") || slug.includes("size")) {
+                setDimensions(field.options[0].label);
+              } else if (slug.includes("frame") || slug.includes("finish")) {
+                setFrame(field.options[0].label);
+              }
+            }
+          });
+          setSelectedCustomOptions(initialMap);
+        }
+      } catch (err) {
+        console.warn("Could not load custom order fields", err);
+      }
+    };
+
+    fetchCustomizations();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +109,7 @@ export default function CustomOrderPage() {
         dimensions,
         frame_preference: frame,
         customization_details: details.trim(),
+        custom_options: selectedCustomOptions,
         reference_image: referenceImage || null,
         notes: notes.trim(),
       };
@@ -101,8 +142,16 @@ export default function CustomOrderPage() {
     if (email) msg += `*Email:* ${email.trim()}\n`;
     if (address) msg += `*Delivery Address:* ${address.trim()}\n`;
     msg += `*Requested Deity / Theme:* ${deity.trim()}\n`;
-    msg += `*Desired Dimensions:* ${dimensions}\n`;
-    msg += `*Frame / Finish:* ${frame}\n`;
+
+    if (Object.keys(selectedCustomOptions).length > 0) {
+      Object.entries(selectedCustomOptions).forEach(([fieldLabel, optValue]) => {
+        msg += `*${fieldLabel}:* ${optValue}\n`;
+      });
+    } else {
+      msg += `*Desired Dimensions:* ${dimensions}\n`;
+      msg += `*Frame / Finish:* ${frame}\n`;
+    }
+
     if (details) msg += `*Customization Details:* ${details.trim()}\n`;
     if (notes) msg += `*Special Notes:* ${notes.trim()}\n`;
     msg += `\nPlease guide me with customization options, framing styles, and pricing quote. Thank you!`;
@@ -260,42 +309,82 @@ export default function CustomOrderPage() {
                 />
               </div>
 
-              {/* Dimensions & Frame Style */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
-                    Desired Dimensions
-                  </label>
-                  <select
-                    value={dimensions}
-                    onChange={(e) => setDimensions(e.target.value)}
-                    className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep cursor-pointer"
-                  >
-                    <option value="12 x 18 in (Compact Pooja Room)">12 x 18 in (Compact Pooja Room)</option>
-                    <option value="16 x 24 in (Standard Classic)">16 x 24 in (Standard Classic)</option>
-                    <option value="20 x 30 in (Grand Sanctum)">20 x 30 in (Grand Sanctum)</option>
-                    <option value="24 x 36 in (Temple Collector Gallery)">24 x 36 in (Temple Collector Gallery)</option>
-                    <option value="Custom Wall Proportions">Custom Wall Proportions (Describe below)</option>
-                  </select>
+              {/* Dynamic Customization Fields (from Database) or Fallback */}
+              {dynamicFields && dynamicFields.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {dynamicFields.map((field) => (
+                    <div key={field.id} className="space-y-1.5">
+                      <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold flex items-center justify-between">
+                        <span>
+                          {field.label} {field.required && "*"}
+                        </span>
+                      </label>
+                      <select
+                        value={selectedCustomOptions[field.label] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedCustomOptions((prev) => ({
+                            ...prev,
+                            [field.label]: val,
+                          }));
+                          const slug = field.slug.toLowerCase();
+                          if (slug.includes("dimension") || slug.includes("size")) {
+                            setDimensions(val);
+                          } else if (slug.includes("frame") || slug.includes("finish")) {
+                            setFrame(val);
+                          }
+                        }}
+                        className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep cursor-pointer"
+                      >
+                        {field.options.map((opt) => (
+                          <option key={opt.id} value={opt.label}>
+                            {opt.label} {opt.priceDelta > 0 ? `(+₹${opt.priceDelta.toLocaleString("en-IN")})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      {field.description && (
+                        <p className="text-[11px] text-zinc-500">{field.description}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
+                      Desired Dimensions
+                    </label>
+                    <select
+                      value={dimensions}
+                      onChange={(e) => setDimensions(e.target.value)}
+                      className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep cursor-pointer"
+                    >
+                      <option value="12 x 18 in (Compact Pooja Room)">12 x 18 in (Compact Pooja Room)</option>
+                      <option value="16 x 24 in (Standard Classic)">16 x 24 in (Standard Classic)</option>
+                      <option value="20 x 30 in (Grand Sanctum)">20 x 30 in (Grand Sanctum)</option>
+                      <option value="24 x 36 in (Temple Collector Gallery)">24 x 36 in (Temple Collector Gallery)</option>
+                      <option value="Custom Wall Proportions">Custom Wall Proportions (Describe below)</option>
+                    </select>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
-                    Frame & Finish Preference
-                  </label>
-                  <select
-                    value={frame}
-                    onChange={(e) => setFrame(e.target.value)}
-                    className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep cursor-pointer"
-                  >
-                    <option value="Teak Wood Frame (Matte Glass)">Teak Wood Frame (Matte Glass)</option>
-                    <option value="22KT Gold Foil Accent Frame">22KT Gold Foil Accent Frame</option>
-                    <option value="Chettinad Carved Wood Border">Chettinad Carved Wood Border</option>
-                    <option value="Contemporary Acrylic Float">Contemporary Acrylic Float</option>
-                    <option value="Unframed Archival Canvas Only">Unframed Archival Canvas Only</option>
-                  </select>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-grey-stone font-bold">
+                      Frame & Finish Preference
+                    </label>
+                    <select
+                      value={frame}
+                      onChange={(e) => setFrame(e.target.value)}
+                      className="w-full border border-black-deep/20 bg-white-pure px-4 py-3 text-sm text-black-deep outline-none focus:border-black-deep cursor-pointer"
+                    >
+                      <option value="Teak Wood Frame (Matte Glass)">Teak Wood Frame (Matte Glass)</option>
+                      <option value="22KT Gold Foil Accent Frame">22KT Gold Foil Accent Frame</option>
+                      <option value="Chettinad Carved Wood Border">Chettinad Carved Wood Border</option>
+                      <option value="Contemporary Acrylic Float">Contemporary Acrylic Float</option>
+                      <option value="Unframed Archival Canvas Only">Unframed Archival Canvas Only</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Customization Details */}
               <div className="space-y-1.5">

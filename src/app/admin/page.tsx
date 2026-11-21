@@ -20,6 +20,7 @@ import {
   Send,
   Users,
   ShoppingBag,
+  Sliders,
 } from "lucide-react";
 import { useProducts } from "@/context/ProductContext";
 import { useCatalog } from "@/context/CatalogContext";
@@ -413,6 +414,19 @@ export default function AdminDashboard() {
           <div>
             <h3 className="font-bold text-white text-sm">Custom Enquiries</h3>
             <p className="text-xs text-zinc-500">Bespoke devotional requests</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/customizations"
+          className="group flex items-center gap-4 p-5 bg-[#070707] border border-white/5 rounded-2xl hover:border-[#c9a227]/40 transition-all"
+        >
+          <div className="w-12 h-12 rounded-xl bg-[#c9a227]/10 border border-[#c9a227]/20 flex items-center justify-center group-hover:bg-[#c9a227]/20 transition-colors">
+            <Sliders className="w-5 h-5 text-[#c9a227]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-sm">Customization Options</h3>
+            <p className="text-xs text-zinc-500">Dynamic dimensions, frames & pricing</p>
           </div>
         </Link>
       </div>

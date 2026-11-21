@@ -398,6 +398,22 @@ export default function AdminEnquiriesPage() {
                   </div>
                 )}
 
+                {selectedEnquiry.custom_options && Object.keys(selectedEnquiry.custom_options).length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-bold">
+                      Dynamic Customization Selections
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black border border-white/5 p-3 rounded-xl">
+                      {Object.entries(selectedEnquiry.custom_options).map(([k, v]) => (
+                        <div key={k} className="text-xs">
+                          <span className="text-zinc-500 block text-[10px] uppercase">{k}</span>
+                          <span className="text-white font-medium">{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedEnquiry.reference_image && (
                   <div className="space-y-1.5">
                     <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-bold">

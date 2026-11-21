@@ -19,6 +19,7 @@ export interface CustomEnquiry {
   dimensions: string;
   frame_preference: string;
   customization_details: string;
+  custom_options?: Record<string, string>;
   reference_image?: string | null;
   notes?: string;
   status: "new" | "contacted" | "in_progress" | "completed";
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       dimensions = "16 x 24 in",
       frame_preference = "Teak Wood Frame",
       customization_details = "",
+      custom_options = {},
       reference_image = null,
       notes = "",
     } = body;
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
       dimensions: dimensions ? dimensions.trim() : "16 x 24 in",
       frame_preference: frame_preference ? frame_preference.trim() : "Teak Wood Frame",
       customization_details: customization_details ? customization_details.trim() : "",
+      custom_options: typeof custom_options === "object" && custom_options !== null ? custom_options : {},
       reference_image: reference_image || null,
       notes: notes ? notes.trim() : "",
       status: "new",

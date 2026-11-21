@@ -533,7 +533,11 @@ export default function AdminOrdersPage() {
                             <div>
                               <p className="font-semibold text-white">{item.name}</p>
                               <p className="text-[11px] text-zinc-300 font-medium">
-                                {item.size || "Standard"} · {item.frame || "22KT Gold Frame"} · Qty: {item.quantity}
+                                {item.size || "Standard"} · {item.frame || "22KT Gold Frame"}
+                                {item.frameModel && ` · Model: ${item.frameModel}`}
+                                {item.customizations && typeof item.customizations === "object" &&
+                                  Object.entries(item.customizations).map(([k, v]) => ` · ${k}: ${v}`).join("")}
+                                {" "}· Qty: {item.quantity}
                               </p>
                             </div>
                             <span className="font-bold text-[#c9a227]">

@@ -19,6 +19,7 @@ import {
   Check,
   CreditCard,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useContactInfo } from "@/context/ContactInfoContext";
@@ -100,7 +101,10 @@ export default function CartDrawer() {
         const slug = i.slug || i.id;
         const link = slug ? `\n   Product Link: ${baseUrl}/products/${slug}` : "";
         const modelStr = i.frameModel ? `\n   Frame Model: ${i.frameModel}` : "";
-        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+        const customDetails = i.customizations && Object.keys(i.customizations).length > 0
+          ? "\n   " + Object.entries(i.customizations).map(([k, v]) => `${k}: ${v}`).join("\n   ")
+          : "";
+        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}${customDetails}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
       })
       .join("\n\n");
 
@@ -406,8 +410,8 @@ export default function CartDrawer() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-zinc-700">
-                            🕉️
+                          <div className="flex h-full w-full items-center justify-center text-[#c9a227]">
+                            <Sparkles className="w-5 h-5" />
                           </div>
                         )}
                       </div>
@@ -425,6 +429,10 @@ export default function CartDrawer() {
                           {item.size && <span>{item.size}</span>}
                           {item.frame && <span>· {item.frame}</span>}
                           {item.frameModel && <span>· Model: {item.frameModel}</span>}
+                          {item.customizations &&
+                            Object.entries(item.customizations).map(([k, v]) => (
+                              <span key={k}>· {k}: {v}</span>
+                            ))}
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <span className="font-semibold text-sm text-[#c9a227]">

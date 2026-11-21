@@ -22,6 +22,7 @@ export interface CartItem {
   size: string;
   frame: string;
   frameModel?: string;
+  customizations?: Record<string, string>;
   quantity: number;
 }
 
@@ -178,7 +179,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (item: Omit<CartItem, "cartItemId" | "quantity"> & { quantity?: number }) => {
       const quantity = Math.max(1, item.quantity || 1);
-      const cartItemId = `${item.id}-${item.size || "standard"}-${item.frame || "unframed"}-${item.frameModel || "default"}`;
+      const customKey = item.customizations
+        ? Object.entries(item.customizations).sort().map(([k, v]) => `${k}:${v}`).join("|")
+        : "";
+      const cartItemId = `${item.id}-${item.size || "standard"}-${item.frame || "unframed"}-${item.frameModel || "default"}${customKey ? `-${customKey}` : ""}`;
 
       setItems((prev) => {
         const existingIndex = prev.findIndex((i) => i.cartItemId === cartItemId);
