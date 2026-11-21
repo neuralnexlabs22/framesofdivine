@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,9 +20,11 @@ import {
   CreditCard,
   Lock,
   Sparkles,
+  Truck,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useContactInfo } from "@/context/ContactInfoContext";
+import { calculateDeliveryDates, type DeliverySettings } from "@/lib/deliverySettings";
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -80,7 +82,27 @@ export default function CartDrawer() {
     customerPhone: string;
     customerAddress: string;
     paymentMethod: "razorpay" | "cod";
+    deliveryEstimate?: string;
   } | null>(null);
+
+  const [deliverySettings, setDeliverySettings] = useState<DeliverySettings | null>(null);
+
+  useEffect(() => {
+    fetch("/api/delivery-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) setDeliverySettings(data.settings);
+      })
+      .catch(() => {});
+  }, []);
+
+  const overallDeliveryEstimate = useMemo(() => {
+    const minD = deliverySettings?.min_delivery_days ?? 20;
+    const maxD = deliverySettings?.max_delivery_days ?? 25;
+    const calcType = deliverySettings?.calculation_type || "calendar_days";
+    const nonDays = deliverySettings?.non_delivery_days || [0];
+    return calculateDeliveryDates(minD, maxD, calcType, nonDays);
+  }, [deliverySettings]);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +126,8 @@ export default function CartDrawer() {
         const customDetails = i.customizations && Object.keys(i.customizations).length > 0
           ? "\n   " + Object.entries(i.customizations).map(([k, v]) => `${k}: ${v}`).join("\n   ")
           : "";
-        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}${customDetails}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
+        const readyStr = i.is_ready_stock ? `\n   Availability: Ready Stock Available` : "";
+        return `${idx + 1}. *${i.name}*\n   Size: ${i.size || "Standard"}\n   Material/Framing: ${i.frame || "22KT Gold Tanjore Painting"}${modelStr}${customDetails}${readyStr}\n   Qty: ${i.quantity} × ₹${Number(i.price).toLocaleString("en-IN")}${link}`;
       })
       .join("\n\n");
 
@@ -123,7 +146,10 @@ export default function CartDrawer() {
       message += `*Delivery Details:*\n`;
       if (customerName) message += `• Customer: ${customerName}\n`;
       if (customerPhone) message += `• Phone: ${customerPhone}\n`;
-      if (customerAddress) message += `• Address: ${customerAddress}\n\n`;
+      if (customerAddress) message += `• Address: ${customerAddress}\n`;
+      message += `• Estimated Delivery: ${overallDeliveryEstimate.displayText}\n\n`;
+    } else {
+      message += `*Estimated Delivery:* ${overallDeliveryEstimate.displayText}\n\n`;
     }
 
     message += `Please confirm availability, framing finish, and dispatch timeline. Thank you!`;
@@ -244,6 +270,7 @@ export default function CartDrawer() {
                 customerPhone: customerPhone.trim(),
                 customerAddress: customerAddress.trim(),
                 paymentMethod: "razorpay",
+                deliveryEstimate: orderData.deliveryEstimate?.displayText || overallDeliveryEstimate.displayText,
               });
               setOrderSuccess(orderData.orderId);
               clearCart();
@@ -433,6 +460,17 @@ export default function CartDrawer() {
                             Object.entries(item.customizations).map(([k, v]) => (
                               <span key={k}>· {k}: {v}</span>
                             ))}
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-2 text-[10px]">
+                          {item.is_ready_stock && (
+                            <span className="bg-[#c9a227]/20 border border-[#c9a227]/40 text-[#c9a227] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[9px]">
+                              Ready Stock
+                            </span>
+                          )}
+                          <span className="text-zinc-400 flex items-center gap-1">
+                            <Truck className="h-3 w-3 text-[#c9a227]" />
+                            {item.estimated_delivery_text || overallDeliveryEstimate.displayText}
+                          </span>
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <span className="font-semibold text-sm text-[#c9a227]">
@@ -635,6 +673,19 @@ export default function CartDrawer() {
                     ))}
                   </div>
                 )}
+                {/* Delivery Snapshot in Confirmation */}
+                <div className="bg-[#c9a227]/10 border border-[#c9a227]/40 rounded-2xl p-4 text-left space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c9a227]">
+                    <Truck className="h-4 w-4" />
+                    <span>Locked Estimated Delivery Window</span>
+                  </div>
+                  <p className="text-sm font-semibold text-white">
+                    {confirmedOrder?.deliveryEstimate || overallDeliveryEstimate.displayText}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    This dynamic date range is recorded permanently with your order and will not be altered by future store updates.
+                  </p>
+                </div>
                 <div className="flex flex-col gap-2 pt-2">
                   {(() => {
                     const rawDigits = whatsappNumber.replace(/\D/g, "");
@@ -807,6 +858,20 @@ export default function CartDrawer() {
                         UPI , Credit card , Debit Card and Netbanking
                       </span>
                     </div>
+                  </div>
+
+                  {/* Estimated Delivery Window Preview */}
+                  <div className="rounded-xl border border-[#c9a227]/30 bg-[#c9a227]/10 p-3.5 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <Truck className="h-4 w-4 text-[#c9a227] shrink-0" />
+                      <div>
+                        <p className="font-bold uppercase tracking-wider text-white">Estimated Delivery Window</p>
+                        <p className="text-[11px] text-zinc-300 font-medium">{overallDeliveryEstimate.displayText}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-[#c9a227] font-bold uppercase tracking-wider bg-black/40 px-2 py-1 rounded shrink-0">
+                      Pan-India
+                    </span>
                   </div>
 
                   {/* Summary */}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, HelpCircle, Scale, ShoppingBag, Zap } from "lucide-react";
+import { Heart, HelpCircle, Scale, ShoppingBag, Zap, Truck, CheckCircle } from "lucide-react";
 import type { DevotionalProduct } from "@/data/devotionalProducts";
 import { useCart } from "@/context/CartContext";
+import { calculateDeliveryDates } from "@/lib/deliverySettings";
 
 function getSafeSize(val: any): string {
   if (!val) return "12 x 18 in";
@@ -16,6 +18,7 @@ function getSafeSize(val: any): string {
 export default function DevotionalProductCard({ product }: { product: DevotionalProduct }) {
   const { addItem, openCart } = useCart();
 
+  const isReadyStock = Boolean(product.is_ready_stock) && (product.stock ?? 10) > 0;
   const sizeString = getSafeSize(product.size);
   const sizeShort = sizeString.split(" / ")[0] || sizeString;
 
@@ -23,6 +26,13 @@ export default function DevotionalProductCard({ product }: { product: Devotional
     product.originalPrice && product.originalPrice > product.price
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : null;
+
+  // Calculate dynamic delivery date strictly following configured min/max or store default (20-25 days)
+  const deliveryEst = useMemo(() => {
+    const minD = product.delivery_min_days ?? 20;
+    const maxD = product.delivery_max_days ?? 25;
+    return calculateDeliveryDates(minD, maxD, "calendar_days");
+  }, [product.delivery_min_days, product.delivery_max_days]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,6 +48,10 @@ export default function DevotionalProductCard({ product }: { product: Devotional
       size: sizeShort,
       frame: "22KT Gold Tanjore Painting",
       quantity: 1,
+      is_ready_stock: isReadyStock,
+      delivery_min_days: product.delivery_min_days,
+      delivery_max_days: product.delivery_max_days,
+      estimated_delivery_text: deliveryEst.displayText,
     });
   };
 
@@ -55,6 +69,10 @@ export default function DevotionalProductCard({ product }: { product: Devotional
       size: sizeShort,
       frame: "22KT Gold Tanjore Painting",
       quantity: 1,
+      is_ready_stock: isReadyStock,
+      delivery_min_days: product.delivery_min_days,
+      delivery_max_days: product.delivery_max_days,
+      estimated_delivery_text: deliveryEst.displayText,
     });
     openCart();
   };
@@ -89,12 +107,20 @@ export default function DevotionalProductCard({ product }: { product: Devotional
           </div>
         )}
 
-        {/* Badge */}
-        {product.badge && (
-          <div className="absolute left-3 top-3 bg-white-pure px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-black-deep shadow-sm pointer-events-none z-10 max-w-[80%] truncate">
-            {product.badge}
-          </div>
-        )}
+        {/* Badges Container (Top-Left) */}
+        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5 z-10 pointer-events-none max-w-[85%]">
+          {isReadyStock && (
+            <div className="bg-[#c9a227] text-black px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] shadow-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+              Ready Stock
+            </div>
+          )}
+          {product.badge && (
+            <div className="bg-white-pure px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-black-deep shadow-sm truncate max-w-full">
+              {product.badge}
+            </div>
+          )}
+        </div>
 
         {/* Hover Action Icons */}
         <div className="absolute bottom-3 right-3 flex translate-y-3 flex-col gap-1.5 opacity-0 transition-cinematic group-hover:translate-y-0 group-hover:opacity-100 z-10">
@@ -128,7 +154,7 @@ export default function DevotionalProductCard({ product }: { product: Devotional
         </h3>
 
         {/* Row 3: Product Dimensions Description */}
-        <p className="mt-1 text-xs text-grey-stone/80 line-clamp-1 h-4">
+        <p className="mt-1 text-xs text-grey-stone/80 group-hover:text-white-ivory/60 line-clamp-1 h-4">
           {sizeString || "Authentic 22KT Gold Tanjore Painting"}
         </p>
 
@@ -151,7 +177,13 @@ export default function DevotionalProductCard({ product }: { product: Devotional
           ) : null}
         </div>
 
-        {/* Row 5: Action Buttons (Cart & Buy) Pinned to Bottom */}
+        {/* Row 5: Dynamic Estimated Delivery Date Range */}
+        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-grey-stone group-hover:text-[#c9a227] h-4 overflow-hidden truncate font-medium">
+          <Truck className="h-3 w-3 text-[#c9a227] shrink-0" />
+          <span className="truncate">Est. Delivery: {deliveryEst.displayText}</span>
+        </div>
+
+        {/* Row 6: Action Buttons (Cart & Buy) Pinned to Bottom */}
         <div className="mt-auto pt-4 grid grid-cols-2 gap-2">
           <button
             type="button"

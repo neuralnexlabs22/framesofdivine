@@ -121,6 +121,9 @@ export default function EditProductPage({
 
   const [isNew, setIsNew] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
+  const [isReadyStock, setIsReadyStock] = useState(false);
+  const [deliveryMinDays, setDeliveryMinDays] = useState("");
+  const [deliveryMaxDays, setDeliveryMaxDays] = useState("");
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
   const [message, setMessage] = useState<null | { type: "error" | "success"; text: string }>(null);
   const initialLoadDone = useRef(false);
@@ -209,6 +212,11 @@ export default function EditProductPage({
 
     setIsNew(Boolean(product.isNew));
     setIsTrending(Boolean(product.isTrending));
+    setIsReadyStock(Boolean(product.is_ready_stock ?? (product as any).isReadyStock));
+    const minD = product.delivery_min_days ?? (product as any).deliveryMinDays;
+    const maxD = product.delivery_max_days ?? (product as any).deliveryMaxDays;
+    setDeliveryMinDays(minD !== undefined ? String(minD) : "");
+    setDeliveryMaxDays(maxD !== undefined ? String(maxD) : "");
     setLoaded(true);
     initialLoadDone.current = true;
   }, [id, getProductById, catalogBrands, productsLoaded, catalogLoading]);
@@ -366,6 +374,10 @@ export default function EditProductPage({
         estimatedDeliveryDays: estimatedDeliveryDays.trim() || "5-7 business days",
         delivery_fee: Number(deliveryFee.replace(/[^\d.]/g, "")) || 0,
         deliveryFee: Number(deliveryFee.replace(/[^\d.]/g, "")) || 0,
+        is_ready_stock: isReadyStock,
+        isReadyStock,
+        delivery_min_days: deliveryMinDays ? Number(deliveryMinDays) : undefined,
+        delivery_max_days: deliveryMaxDays ? Number(deliveryMaxDays) : undefined,
         isNew,
         isTrending,
       });
@@ -589,6 +601,67 @@ export default function EditProductPage({
             placeholder="10"
             className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
           />
+        </div>
+
+        {/* Ready Stock Setting */}
+        <div className="p-4 rounded-xl border border-[#c9a227]/40 bg-[#c9a227]/10 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-bold text-white uppercase tracking-wider block">
+              Available in Ready Stock: {isReadyStock ? "ON" : "OFF"}
+            </span>
+            <span className="text-xs text-zinc-300">
+              When ON and stock &gt; 0, this artwork appears in the storefront Ready Stock collection with a verified ready stock indicator.
+            </span>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={isReadyStock}
+              onChange={(e) => setIsReadyStock(e.target.checked)}
+              className="w-5 h-5 accent-[#c9a227] cursor-pointer"
+            />
+            <span className="text-xs font-bold uppercase text-[#c9a227]">
+              {isReadyStock ? "READY STOCK (ON)" : "OFF"}
+            </span>
+          </label>
+        </div>
+
+        {/* Custom Delivery Estimate Override */}
+        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] space-y-3">
+          <span className="text-xs font-bold text-white uppercase tracking-wider block">
+            Estimated Delivery Override (Optional)
+          </span>
+          <p className="text-xs text-zinc-400">
+            Leave blank to automatically use the store default (20–25 days). For ready stock, you may set 5–7 days.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                Min Delivery Days
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="20"
+                value={deliveryMinDays}
+                onChange={(e) => setDeliveryMinDays(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-lg px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                Max Delivery Days
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="25"
+                value={deliveryMaxDays}
+                onChange={(e) => setDeliveryMaxDays(e.target.value)}
+                className="w-full bg-black border border-white/10 rounded-lg px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Delivery Timeline & Shipping Fee */}

@@ -53,6 +53,10 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
 
   let estimatedDeliveryDays = row.estimated_delivery_days || "5-7 business days";
   let deliveryFee = Number(row.delivery_fee || 0);
+  let isReadyStock = Boolean(row.is_ready_stock);
+  let deliveryMinDays = typeof row.delivery_min_days === "number" ? row.delivery_min_days : undefined;
+  let deliveryMaxDays = typeof row.delivery_max_days === "number" ? row.delivery_max_days : undefined;
+
   if (typeof row.description === "string") {
     if (row.description.includes("<!--delivery_days:")) {
       const match = row.description.match(/<!--delivery_days:(.*?)-->/);
@@ -62,8 +66,22 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
       const match = row.description.match(/<!--delivery_fee:(.*?)-->/);
       if (match) deliveryFee = Number(match[1]) || 0;
     }
+    if (row.description.includes("<!--ready_stock:true-->")) {
+      isReadyStock = true;
+    } else if (row.description.includes("<!--ready_stock:false-->")) {
+      isReadyStock = false;
+    }
+    if (row.description.includes("<!--delivery_min_days:")) {
+      const match = row.description.match(/<!--delivery_min_days:(\d+)-->/);
+      if (match) deliveryMinDays = parseInt(match[1], 10);
+    }
+    if (row.description.includes("<!--delivery_max_days:")) {
+      const match = row.description.match(/<!--delivery_max_days:(\d+)-->/);
+      if (match) deliveryMaxDays = parseInt(match[1], 10);
+    }
   }
 
+  const stock = typeof row.stock === "number" ? row.stock : 10;
   const firstSize = Array.isArray(row.sizes) && row.sizes[0]
     ? (typeof row.sizes[0] === "object" ? row.sizes[0].label : String(row.sizes[0]))
     : "12 x 18 in / 22KT Gold Tanjore";
@@ -94,6 +112,10 @@ function mapRowToDevotionalProduct(row: any): DevotionalProduct {
     frame_models: frameModels,
     estimated_delivery_days: estimatedDeliveryDays,
     delivery_fee: deliveryFee,
+    is_ready_stock: isReadyStock,
+    stock,
+    delivery_min_days: deliveryMinDays,
+    delivery_max_days: deliveryMaxDays,
   };
 }
 
@@ -102,7 +124,6 @@ export async function getDevotionalProductAsync(
 ): Promise<DevotionalProduct | undefined> {
   // 1. Check in static array first
   const staticProduct = getDevotionalProduct(slug);
-  if (staticProduct) return staticProduct;
 
   // 2. Query Supabase for dynamic products
   try {
@@ -119,7 +140,7 @@ export async function getDevotionalProductAsync(
     console.warn("Error querying dynamic product from Supabase:", err);
   }
 
-  return undefined;
+  return staticProduct;
 }
 
 export async function getDevotionalCategoriesAsync(): Promise<
@@ -221,8 +242,14 @@ export async function getDevotionalProductsAsync(
     return allProducts;
   }
 
+  // Ready Stock special category check
+  if (categorySlug === "ready-stock") {
+    return allProducts.filter(
+      (product) => Boolean(product.is_ready_stock) && (product.stock ?? 10) > 0
+    );
+  }
+
   return allProducts.filter((product) =>
     isCategoryMatch(product.category, categorySlug)
   );
 }
-

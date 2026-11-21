@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck } from "lucide-react";
 import { devotionalProducts } from "@/data/devotionalProducts";
 import {
   getDevotionalProductAsync,
   getDevotionalProductsAsync,
 } from "@/lib/devotionalServer";
+import { getDeliverySettingsAsync, resolveDeliveryEstimate } from "@/lib/deliverySettings";
 import ProductDetailActions from "@/components/ProductDetailActions";
 import DevotionalProductCard from "@/components/DevotionalProductCard";
 
@@ -19,10 +20,17 @@ export function generateStaticParams() {
 
 export default async function ProductPage(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
-  const product = await getDevotionalProductAsync(slug);
+  const [product, allProducts, deliverySettings] = await Promise.all([
+    getDevotionalProductAsync(slug),
+    getDevotionalProductsAsync(),
+    getDeliverySettingsAsync(),
+  ]);
+
   if (!product) notFound();
 
-  const allProducts = await getDevotionalProductsAsync();
+  const isReadyStock = Boolean(product.is_ready_stock) && (product.stock ?? 10) > 0;
+  const deliveryEstimate = resolveDeliveryEstimate(product, deliverySettings);
+
   const relatedProducts = allProducts
     .filter((p) => p.slug !== product.slug && p.id !== product.id)
     .sort((a, b) => (a.category === product.category ? -1 : 1))
@@ -34,7 +42,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
         <div>
           <Link
             href="/shop"
-            className="mb-8 inline-flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep"
+            className="mb-8 inline-flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-grey-stone hover:text-black-deep transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Shop
           </Link>
@@ -63,9 +71,17 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           </div>
         </div>
         <div className="sticky top-28 border border-black-deep/15 bg-[#f4f0e8] p-7">
-          <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[#c9a227] font-bold">
-            {product.category}
-          </p>
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#c9a227] font-bold">
+              {product.category}
+            </p>
+            {isReadyStock && (
+              <div className="inline-flex items-center gap-1.5 bg-[#c9a227]/20 border border-[#c9a227] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-[#8c6d12]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a227]" />
+                <span>READY STOCK AVAILABLE</span>
+              </div>
+            )}
+          </div>
           <h1 className="font-serif text-4xl uppercase leading-tight text-black-deep md:text-5xl">
             {product.name}
           </h1>
@@ -78,7 +94,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           <div className="mt-6">
             <ProductDetailActions product={product} />
           </div>
-          {/* Delivery & Dispatch Badge */}
+          {/* Dynamic Delivery & Dispatch Badge */}
           <div className="mt-6 border-t border-black-deep/10 pt-4 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-widest text-black-deep">
@@ -90,11 +106,15 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
                 PAN INDIA
               </span>
             </div>
-            <p className="text-xs text-grey-stone flex items-center gap-1.5">
+            <p className="text-xs text-grey-stone flex items-center gap-2">
+              <Truck className="h-4 w-4 text-[#c9a227]" />
               <span>Estimated Delivery:</span>
               <span className="font-semibold text-black-deep">
-                {product.estimated_delivery_days || "5-7 business days"}
+                {deliveryEstimate.displayText}
               </span>
+            </p>
+            <p className="text-[11px] text-black-charcoal/65">
+              Calculated dynamically from order date ({deliveryEstimate.minDays}–{deliveryEstimate.maxDays} days). Insured art wooden crate packaging.
             </p>
           </div>
         </div>

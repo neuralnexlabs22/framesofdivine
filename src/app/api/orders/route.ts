@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseQuery } from "@/lib/supabaseDb";
+import { getDeliverySettingsAsync, calculateDeliveryDates } from "@/lib/deliverySettings";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,15 @@ export async function POST(request: NextRequest) {
 
     const orderId = `GOD-${Date.now().toString(36).toUpperCase()}`;
 
+    // Compute authoritative delivery dates snapshot
+    const deliverySettings = await getDeliverySettingsAsync();
+    const deliveryEstimate = calculateDeliveryDates(
+      deliverySettings.min_delivery_days,
+      deliverySettings.max_delivery_days,
+      deliverySettings.calculation_type,
+      deliverySettings.non_delivery_days
+    );
+
     // Record order in Supabase orders table
     const orderData = {
       id: orderId,
@@ -34,16 +44,25 @@ export async function POST(request: NextRequest) {
       customer_phone: customer_phone ? String(customer_phone).trim() : null,
       customer_email: customer_email ? String(customer_email).trim() : null,
       items: items || null,
-      shipping_address: typeof shipping_address === "string" ? shipping_address : JSON.stringify({
+      shipping_address: JSON.stringify({
         customer_name,
         customer_phone,
         customer_email,
-        address: shipping_address,
+        address: typeof shipping_address === "string" ? shipping_address : shipping_address?.address || "Direct Order",
         payment_method,
         items,
         subtotal,
         discount_amount,
         coupon_code,
+        estimated_delivery: {
+          min_days: deliveryEstimate.minDays,
+          max_days: deliveryEstimate.maxDays,
+          min_date: deliveryEstimate.minDate,
+          max_date: deliveryEstimate.maxDate,
+          text: deliveryEstimate.displayText,
+          calculation_type: deliveryEstimate.calculationType,
+          created_at: new Date().toISOString(),
+        },
       }),
     };
 

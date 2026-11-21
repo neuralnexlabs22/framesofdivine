@@ -43,6 +43,12 @@ export interface Product {
   stock: number;
   isNew: boolean;
   isTrending?: boolean;
+  is_ready_stock?: boolean;
+  isReadyStock?: boolean;
+  delivery_min_days?: number;
+  delivery_max_days?: number;
+  deliveryMinDays?: number;
+  deliveryMaxDays?: number;
 }
 
 interface ProductContextType {

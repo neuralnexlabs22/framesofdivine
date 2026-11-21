@@ -48,12 +48,14 @@ export default function Navbar() {
   }, [pathname]);
 
   const activeCategoryLinks = useMemo(() => {
+    const readyStockLink: [string, string] = ["Ready Stock", "/shop/ready-stock"];
     if (catalogCategories && catalogCategories.length > 0) {
-      return catalogCategories
+      const dbLinks = catalogCategories
         .filter((c) => c.is_active !== false)
         .map((c) => [c.name, `/shop/${c.slug}`] as [string, string]);
+      return [readyStockLink, ...dbLinks];
     }
-    return categoryLinks;
+    return [readyStockLink, ...categoryLinks];
   }, [catalogCategories]);
 
   const phone = contactInfo?.phone_number || "90470 44916";

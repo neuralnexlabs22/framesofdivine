@@ -62,6 +62,9 @@ export default function AddProductPage() {
     deliveryFee: "0",
     stockQuantity: "",
     stockStatus: "in_stock" as "in_stock" | "out_of_stock" | "low_stock",
+    isReadyStock: false,
+    deliveryMinDays: "",
+    deliveryMaxDays: "",
     collectionType: "",
     featured: false,
     isTrending: false,
@@ -268,6 +271,10 @@ export default function AddProductPage() {
         delivery_fee: Number(formData.deliveryFee.replace(/[^\d.]/g, "")) || 0,
         deliveryFee: Number(formData.deliveryFee.replace(/[^\d.]/g, "")) || 0,
         stock: parseInt(formData.stockQuantity) || 0,
+        is_ready_stock: formData.isReadyStock,
+        isReadyStock: formData.isReadyStock,
+        delivery_min_days: formData.deliveryMinDays ? Number(formData.deliveryMinDays) : undefined,
+        delivery_max_days: formData.deliveryMaxDays ? Number(formData.deliveryMaxDays) : undefined,
         isNew: formData.featured,
         isTrending: formData.isTrending,
       });
@@ -564,6 +571,68 @@ export default function AddProductPage() {
                   Out of Stock
                 </AdminSelectOption>
               </AdminSelect>
+            </div>
+
+            {/* Ready Stock Setting */}
+            <div className="col-span-full p-4 rounded-xl border border-[#c9a227]/40 bg-[#c9a227]/10 flex items-center justify-between">
+              <div>
+                <span className="text-sm font-bold text-white uppercase tracking-wider block">
+                  Available in Ready Stock: {formData.isReadyStock ? "ON" : "OFF"}
+                </span>
+                <span className="text-xs text-zinc-300">
+                  When ON and stock &gt; 0, this artwork appears in the storefront Ready Stock collection with a verified ready stock indicator.
+                </span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  name="isReadyStock"
+                  checked={formData.isReadyStock}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, isReadyStock: e.target.checked }))}
+                  className="w-5 h-5 accent-[#c9a227] cursor-pointer"
+                />
+                <span className="text-xs font-bold uppercase text-[#c9a227]">
+                  {formData.isReadyStock ? "READY STOCK (ON)" : "OFF"}
+                </span>
+              </label>
+            </div>
+
+            {/* Custom Delivery Estimate Override */}
+            <div className="col-span-full p-4 rounded-xl border border-white/10 bg-white/[0.02] space-y-3">
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                Estimated Delivery Override (Optional)
+              </span>
+              <p className="text-xs text-zinc-400">
+                Leave blank to automatically use the store default (20–25 days). For ready stock, you may set 5–7 days.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                    Min Delivery Days
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="20"
+                    value={formData.deliveryMinDays}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, deliveryMinDays: e.target.value }))}
+                    className="w-full bg-black border border-white/10 rounded-lg px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                    Max Delivery Days
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="25"
+                    value={formData.deliveryMaxDays}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, deliveryMaxDays: e.target.value }))}
+                    className="w-full bg-black border border-white/10 rounded-lg px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

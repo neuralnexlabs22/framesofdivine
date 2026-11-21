@@ -25,6 +25,10 @@ export type DevotionalProduct = {
   frameModel?: string;
   estimated_delivery_days?: string;
   delivery_fee?: number;
+  is_ready_stock?: boolean;
+  stock?: number;
+  delivery_min_days?: number;
+  delivery_max_days?: number;
 };
 
 export const devotionalCategories = [
@@ -68,6 +72,8 @@ export const devotionalProducts: DevotionalProduct[] = [
     cropPosition: deity.cropPosition,
     badge: deity.sacredTitle || "Devotional",
     size: "12 x 18 in / Authentic 22KT Gold Leaf",
+    is_ready_stock: index < 3, // Initial authentic ready stock
+    stock: index < 3 ? 8 : 15,
   })),
   {
     id: "temple-heritage-gopuram",
@@ -81,6 +87,8 @@ export const devotionalProducts: DevotionalProduct[] = [
     imageAlt: devotionalAssets.temple.alt,
     badge: "Temple",
     size: "16 x 24 in / Authentic 22KT Gold Leaf",
+    is_ready_stock: true,
+    stock: 5,
   },
   {
     id: "sacred-yali-sculpture",
@@ -94,6 +102,8 @@ export const devotionalProducts: DevotionalProduct[] = [
     imageAlt: devotionalAssets.sculptures.alt,
     badge: "Sculpture",
     size: "16 x 24 in / Authentic 22KT Gold Leaf",
+    is_ready_stock: false,
+    stock: 10,
   },
   ...artworks.map((artwork, index) => ({
     id: artwork.slug,
@@ -107,6 +117,8 @@ export const devotionalProducts: DevotionalProduct[] = [
     imageAlt: artwork.title,
     badge: artwork.type,
     size: "Premium framed option available",
+    is_ready_stock: index === 0,
+    stock: index === 0 ? 4 : 10,
   })),
 ];
 
@@ -135,12 +147,17 @@ export function getDevotionalProduct(slug: string): DevotionalProduct | undefine
       imageAlt: catalogItem.name,
       badge: catalogItem.brand || catalogItem.category,
       size: catalogItem.sizes?.[0] || "12 x 18 in / Authentic Tanjore Painting",
+      is_ready_stock: Boolean((catalogItem as any).is_ready_stock),
+      stock: catalogItem.stock ?? 10,
     };
   }
   return undefined;
 }
 
 export function getProductsByCategory(categorySlug: string) {
+  if (categorySlug === "ready-stock") {
+    return devotionalProducts.filter((product) => Boolean(product.is_ready_stock) && (product.stock ?? 10) > 0);
+  }
   const category = devotionalCategories.find((item) => item.slug === categorySlug);
   if (!category) return [];
   return devotionalProducts.filter((product) => product.category === category.name);

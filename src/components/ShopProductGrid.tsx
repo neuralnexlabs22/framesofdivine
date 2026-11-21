@@ -93,6 +93,10 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
                 ? (p.sizes[0] as any).label || "12 x 18 in / 22KT Gold Tanjore"
                 : String(p.sizes[0])
               : "12 x 18 in / 22KT Gold Tanjore",
+          is_ready_stock: Boolean(p.is_ready_stock ?? p.isReadyStock),
+          stock: p.stock ?? 10,
+          delivery_min_days: p.delivery_min_days ?? p.deliveryMinDays,
+          delivery_max_days: p.delivery_max_days ?? p.deliveryMaxDays,
         };
         map.set(slug, mapped);
         map.set(p.id, mapped);
@@ -102,10 +106,19 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
     return Array.from(new Set(map.values()));
   }, [liveProducts, loaded, initialProducts]);
 
+  const readyStockCount = useMemo(() => {
+    return effectiveProducts.filter((p) => Boolean(p.is_ready_stock) && (p.stock ?? 10) > 0).length;
+  }, [effectiveProducts]);
+
   const filteredAndSorted = useMemo(() => {
     return effectiveProducts
       .filter((product) => {
-        const matchesCategory = isCategoryMatch(product.category, selectedCategory);
+        let matchesCategory = false;
+        if (selectedCategory === "ready-stock") {
+          matchesCategory = Boolean(product.is_ready_stock) && (product.stock ?? 10) > 0;
+        } else {
+          matchesCategory = isCategoryMatch(product.category, selectedCategory);
+        }
 
         const query = search.trim().toLowerCase();
         const matchesSearch =
@@ -175,6 +188,21 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
           >
             All Paintings ({effectiveProducts.length})
           </button>
+
+          {/* Dedicated Ready Stock Filter Pill */}
+          <button
+            type="button"
+            onClick={() => setSelectedCategory("ready-stock")}
+            className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap border flex items-center gap-1.5 ${
+              selectedCategory === "ready-stock"
+                ? "bg-[#c9a227] text-black border-[#c9a227] shadow-sm font-bold"
+                : "bg-white-pure text-black-deep border-black-deep/20 hover:border-[#c9a227]"
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a227]" />
+            Ready Stock ({readyStockCount})
+          </button>
+
           {combinedCategories.map((cat) => (
             <button
               key={cat.slug}
@@ -195,7 +223,7 @@ export default function ShopProductGrid({ initialProducts, categories }: ShopPro
       {/* Results Header */}
       <div className="flex items-center justify-between text-xs text-grey-stone">
         <p>
-          Showing <span className="font-bold text-black-deep">{filteredAndSorted.length}</span> sacred devotional paintings
+          Showing <span className="font-bold text-black-deep">{filteredAndSorted.length}</span> {selectedCategory === "ready-stock" ? "ready stock" : "sacred devotional"} paintings
         </p>
         {(search || selectedCategory !== "all" || sortBy !== "featured") && (
           <button

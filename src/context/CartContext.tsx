@@ -24,6 +24,10 @@ export interface CartItem {
   frameModel?: string;
   customizations?: Record<string, string>;
   quantity: number;
+  is_ready_stock?: boolean;
+  delivery_min_days?: number;
+  delivery_max_days?: number;
+  estimated_delivery_text?: string;
 }
 
 export interface AppliedCoupon {

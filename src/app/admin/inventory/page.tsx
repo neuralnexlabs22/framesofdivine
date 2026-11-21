@@ -14,16 +14,17 @@ import {
   Plus,
   Minus,
   Edit2,
-  ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { useProducts, type Product } from "@/context/ProductContext";
 
 export default function AdminInventoryPage() {
   const { products, updateProduct, loaded } = useProducts();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock" | "out_of_stock">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "ready_stock" | "in_stock" | "low_stock" | "out_of_stock">("all");
   const [editingStock, setEditingStock] = useState<Record<string, number>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [togglingReadyId, setTogglingReadyId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const getStockStatus = (stock: number) => {
@@ -40,7 +41,14 @@ export default function AdminInventoryPage() {
       p.category.toLowerCase().includes(search.toLowerCase());
 
     const itemStatus = getStockStatus(stock).status;
-    const matchesFilter = statusFilter === "all" || itemStatus === statusFilter;
+    const isRS = Boolean(p.is_ready_stock ?? p.isReadyStock);
+
+    let matchesFilter = true;
+    if (statusFilter === "ready_stock") {
+      matchesFilter = isRS && stock > 0;
+    } else if (statusFilter !== "all") {
+      matchesFilter = itemStatus === statusFilter;
+    }
 
     return matchesSearch && matchesFilter;
   });
@@ -49,6 +57,7 @@ export default function AdminInventoryPage() {
   const lowStockCount = products.filter((p) => (p.stock ?? 10) > 0 && (p.stock ?? 10) <= 5).length;
   const outOfStockCount = products.filter((p) => (p.stock ?? 10) <= 0).length;
   const inStockCount = products.length - lowStockCount - outOfStockCount;
+  const readyStockCount = products.filter((p) => Boolean(p.is_ready_stock ?? p.isReadyStock) && (p.stock ?? 10) > 0).length;
 
   const handleStockChange = (productId: string, val: number) => {
     setEditingStock((prev) => ({
@@ -78,6 +87,24 @@ export default function AdminInventoryPage() {
     }
   };
 
+  const handleToggleReadyStock = async (product: Product) => {
+    const current = Boolean(product.is_ready_stock ?? product.isReadyStock);
+    const nextVal = !current;
+    setTogglingReadyId(product.id);
+    try {
+      await updateProduct(product.id, {
+        is_ready_stock: nextVal,
+        isReadyStock: nextVal,
+      });
+      setToastMessage(`✓ Set Ready Stock ${nextVal ? "ON" : "OFF"} for ${product.name}`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      alert(err?.message || "Failed to update ready stock");
+    } finally {
+      setTogglingReadyId(null);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -99,52 +126,58 @@ export default function AdminInventoryPage() {
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#c9a227]">
             Frames of Divine Inventory
           </span>
-          <h1 className="text-3xl md:text-4xl font-serif font-medium uppercase tracking-tight text-white mt-0.5">
-            Artworks & Print Inventory
+          <h1 className="text-3xl md:text-4xl font-serif font-medium uppercase tracking-tight text-white mt-1">
+            Inventory & Ready Stock Control
           </h1>
           <p className="text-zinc-400 mt-1 text-sm">
-            Monitor sanctum art stock levels, set low inventory thresholds, and manage dispatch quantities
+            Live stock counts across {products.length} devotional prints and authentic Tanjore artworks.
           </p>
         </div>
         <Link
           href="/admin/products/add"
           className="flex items-center justify-center gap-2 bg-[#c9a227] text-black font-black uppercase tracking-widest text-xs px-5 py-3 rounded-xl hover:brightness-110 transition-all shadow-md shadow-[#c9a227]/20"
         >
-          <Plus className="w-4 h-4" /> Add Product
+          <Plus className="w-4 h-4" />
+          Add Print
         </Link>
       </div>
 
-      {/* Summary KPI Badges */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#0a0a0a] border border-white/10 p-5 rounded-2xl">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-500">Total Print Units</p>
-          <p className="text-3xl font-serif font-bold text-white mt-1">{totalStock}</p>
-          <p className="text-[11px] text-zinc-500 mt-1">{products.length} unique catalogue SKUs</p>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 space-y-1">
+          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Total Stock Units</span>
+          <p className="text-2xl font-serif font-bold text-white">{totalStock}</p>
+          <span className="text-[11px] text-zinc-500">Across {products.length} prints</span>
         </div>
-        <div className="bg-[#0a0a0a] border border-white/10 p-5 rounded-2xl">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-500">Healthy Stock</p>
-          <p className="text-3xl font-serif font-bold text-emerald-400 mt-1">{inStockCount}</p>
-          <p className="text-[11px] text-zinc-500 mt-1">&gt; 5 units available</p>
+        <div className="bg-[#0a0a0a] border border-[#c9a227]/40 rounded-2xl p-5 space-y-1">
+          <span className="text-[10px] uppercase tracking-wider text-[#c9a227] font-bold">Ready Stock (Live)</span>
+          <p className="text-2xl font-serif font-bold text-[#c9a227]">{readyStockCount}</p>
+          <span className="text-[11px] text-zinc-400">Available immediately</span>
         </div>
-        <div className="bg-[#0a0a0a] border border-white/10 p-5 rounded-2xl">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-amber-500">Low Stock Alert</p>
-          <p className="text-3xl font-serif font-bold text-amber-400 mt-1">{lowStockCount}</p>
-          <p className="text-[11px] text-zinc-500 mt-1">1 to 5 units remaining</p>
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 space-y-1">
+          <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">In Stock</span>
+          <p className="text-2xl font-serif font-bold text-emerald-400">{inStockCount}</p>
+          <span className="text-[11px] text-zinc-500">&gt; 5 units</span>
         </div>
-        <div className="bg-[#0a0a0a] border border-white/10 p-5 rounded-2xl">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-red-500">Out of Stock</p>
-          <p className="text-3xl font-serif font-bold text-red-400 mt-1">{outOfStockCount}</p>
-          <p className="text-[11px] text-zinc-500 mt-1">Requires print replenishment</p>
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 space-y-1">
+          <span className="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Low Stock Alert</span>
+          <p className="text-2xl font-serif font-bold text-amber-400">{lowStockCount}</p>
+          <span className="text-[11px] text-zinc-500">1 – 5 units</span>
+        </div>
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 space-y-1 col-span-2 lg:col-span-1">
+          <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold">Out of Stock</span>
+          <p className="text-2xl font-serif font-bold text-red-400">{outOfStockCount}</p>
+          <span className="text-[11px] text-zinc-500">0 units</span>
         </div>
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+      {/* Filter and Search */}
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search by print name, category, or deity..."
+            placeholder="Search by print title, category, deity..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-black border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-[#c9a227] focus:outline-none transition-colors"
@@ -154,6 +187,7 @@ export default function AdminInventoryPage() {
           {(
             [
               { id: "all", label: "All Items" },
+              { id: "ready_stock", label: `⚡ Ready Stock (${readyStockCount})` },
               { id: "in_stock", label: "In Stock" },
               { id: "low_stock", label: "Low Stock" },
               { id: "out_of_stock", label: "Out of Stock" },
@@ -183,7 +217,7 @@ export default function AdminInventoryPage() {
                 <th className="py-4 px-6">Artwork / Deity Print</th>
                 <th className="py-4 px-6">Category</th>
                 <th className="py-4 px-6">Base Price</th>
-                <th className="py-4 px-6">Status</th>
+                <th className="py-4 px-6 text-center">Ready Stock</th>
                 <th className="py-4 px-6 text-center">Available Stock</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
@@ -203,6 +237,8 @@ export default function AdminInventoryPage() {
                   const isModified = editingStock[product.id] !== undefined && editingStock[product.id] !== (product.stock ?? 10);
                   const statusInfo = getStockStatus(currentStock);
                   const StatusIcon = statusInfo.icon;
+                  const isRS = Boolean(product.is_ready_stock ?? product.isReadyStock);
+                  const qualifiesReadyStock = isRS && currentStock > 0;
 
                   return (
                     <tr key={product.id} className="hover:bg-white/[0.02] transition-colors">
@@ -235,12 +271,41 @@ export default function AdminInventoryPage() {
                       <td className="py-4 px-6 text-xs text-white font-serif">
                         ₹{product.price.toLocaleString("en-IN")}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusInfo.color}`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {statusInfo.label}
-                        </span>
+
+                      {/* Ready Stock Toggle */}
+                      <td className="py-4 px-6 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReadyStock(product)}
+                          disabled={togglingReadyId === product.id}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border inline-flex items-center gap-1.5 ${
+                            qualifiesReadyStock
+                              ? "bg-[#c9a227] text-black border-[#c9a227] shadow-sm hover:brightness-110"
+                              : isRS && currentStock <= 0
+                              ? "bg-amber-950/40 text-amber-300 border-amber-600/40"
+                              : "bg-black border-white/10 text-zinc-500 hover:text-white"
+                          }`}
+                        >
+                          {qualifiesReadyStock ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>ON</span>
+                            </>
+                          ) : isRS && currentStock <= 0 ? (
+                            <>
+                              <AlertTriangle className="w-3 h-3" />
+                              <span>ON (0 Stock)</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-3 h-3" />
+                              <span>OFF</span>
+                            </>
+                          )}
+                        </button>
                       </td>
+
+                      {/* Stock Quantity Controls */}
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -268,6 +333,7 @@ export default function AdminInventoryPage() {
                           </button>
                         </div>
                       </td>
+
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {isModified && (

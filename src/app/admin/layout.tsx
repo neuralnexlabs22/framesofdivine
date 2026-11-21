@@ -23,6 +23,7 @@ import {
   Boxes,
   ShoppingBag,
   Sliders,
+  Truck,
 } from "lucide-react";
 import { useState } from "react";
 import { ProductProvider } from "@/context/ProductContext";
@@ -43,6 +44,7 @@ const navItems = [
   { href: "/admin/enquiries", label: "Custom Enquiries", icon: Send },
   { href: "/admin/homepage", label: "Homepage Hero", icon: Store },
   { href: "/admin/settings", label: "Store Settings", icon: Eye },
+  { href: "/admin/delivery", label: "Delivery & Shipping Settings", icon: Truck },
   { href: "/admin/contact", label: "Contact & WhatsApp", icon: Lock },
 ];
 

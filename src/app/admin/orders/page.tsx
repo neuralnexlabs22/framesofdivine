@@ -519,6 +519,20 @@ export default function AdminOrdersPage() {
                         {details.coupon_code} (-₹{details.discount_amount || 0})
                       </p>
                     )}
+                    {details.estimated_delivery && (
+                      <div className="mt-3 p-3 rounded-xl bg-[#c9a227]/10 border border-[#c9a227]/30 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-[#c9a227] font-bold uppercase tracking-wider">
+                          <Truck className="h-3.5 w-3.5" />
+                          <span>Estimated Delivery Snapshot</span>
+                        </div>
+                        <p className="text-white font-semibold">
+                          {details.estimated_delivery.text || `${details.estimated_delivery.min_days}–${details.estimated_delivery.max_days} days`}
+                        </p>
+                        <p className="text-[10px] text-zinc-400">
+                          {details.estimated_delivery.min_date} to {details.estimated_delivery.max_date} ({details.estimated_delivery.calculation_type})
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Items snapshot */}

@@ -44,6 +44,32 @@ function mapDbToProduct(row: any) {
     }
   }
 
+  let isReadyStock = Boolean(row.is_ready_stock);
+  if (desc.includes("<!--ready_stock:true-->")) {
+    isReadyStock = true;
+    desc = desc.replace(/<!--ready_stock:true-->\s*/, "");
+  } else if (desc.includes("<!--ready_stock:false-->")) {
+    isReadyStock = false;
+    desc = desc.replace(/<!--ready_stock:false-->\s*/, "");
+  }
+
+  let delMinDays = typeof row.delivery_min_days === "number" ? row.delivery_min_days : undefined;
+  let delMaxDays = typeof row.delivery_max_days === "number" ? row.delivery_max_days : undefined;
+  if (desc.includes("<!--delivery_min_days:")) {
+    const match = desc.match(/<!--delivery_min_days:(\d+)-->/);
+    if (match) {
+      delMinDays = parseInt(match[1], 10);
+      desc = desc.replace(/<!--delivery_min_days:.*?-->\s*/, "");
+    }
+  }
+  if (desc.includes("<!--delivery_max_days:")) {
+    const match = desc.match(/<!--delivery_max_days:(\d+)-->/);
+    if (match) {
+      delMaxDays = parseInt(match[1], 10);
+      desc = desc.replace(/<!--delivery_max_days:.*?-->\s*/, "");
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -64,6 +90,12 @@ function mapDbToProduct(row: any) {
     estimatedDeliveryDays: estDelivery || "5-7 business days",
     delivery_fee: Number(delFee || 0),
     deliveryFee: Number(delFee || 0),
+    is_ready_stock: isReadyStock,
+    isReadyStock,
+    delivery_min_days: delMinDays,
+    delivery_max_days: delMaxDays,
+    deliveryMinDays: delMinDays,
+    deliveryMaxDays: delMaxDays,
     isNew: Boolean(row.is_new),
     isTrending: Boolean(row.is_trending),
     createdAt: row.created_at,
@@ -98,15 +130,15 @@ export async function GET(request: NextRequest) {
         const seedPayload = {
           id: p.id,
           name: p.name,
-          slug: p.id,
+          slug: (p as any).slug || p.id,
           brand: p.brand || "Frames of Divine",
           price: p.price,
-          original_price: p.originalPrice || null,
+          original_price: p.originalPrice || Math.round(p.price * 1.35),
           category: p.category,
           images: p.images || [],
           description: p.description || "",
-          stock: p.stock ?? 15,
-          colors: p.colors || ["Teak Wood Frame", "24 Carat Gold Leaf"],
+          stock: p.stock ?? 10,
+          colors: p.colors || [],
           sizes: p.sizes || ["15 x 18 in", "17 x 21 in", "20 x 24 in"],
           is_new: Boolean(p.isNew),
           is_trending: Boolean(p.isTrending),
@@ -160,6 +192,12 @@ export async function POST(request: NextRequest) {
       estimatedDeliveryDays,
       delivery_fee,
       deliveryFee,
+      is_ready_stock,
+      isReadyStock,
+      delivery_min_days,
+      delivery_max_days,
+      deliveryMinDays,
+      deliveryMaxDays,
       isNew = false,
       isTrending = false,
     } = body;
@@ -167,6 +205,9 @@ export async function POST(request: NextRequest) {
     const effectiveDeliveryDays = estimated_delivery_days || estimatedDeliveryDays || "5-7 business days";
     const effectiveDeliveryFee = Number(delivery_fee ?? deliveryFee ?? 0);
     const effectiveFrameModels = frame_models.length > 0 ? frame_models : frameModels;
+    const effectiveReadyStock = Boolean(is_ready_stock ?? isReadyStock ?? false);
+    const effectiveMinDays = delivery_min_days !== undefined ? Number(delivery_min_days) : deliveryMinDays !== undefined ? Number(deliveryMinDays) : undefined;
+    const effectiveMaxDays = delivery_max_days !== undefined ? Number(delivery_max_days) : deliveryMaxDays !== undefined ? Number(deliveryMaxDays) : undefined;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ error: "Product name is required" }, { status: 400 });
@@ -185,6 +226,12 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
+    // Prepare tags for fallback
+    let tags = "";
+    tags += `<!--ready_stock:${effectiveReadyStock ? "true" : "false"}-->\n`;
+    if (effectiveMinDays !== undefined) tags += `<!--delivery_min_days:${effectiveMinDays}-->\n`;
+    if (effectiveMaxDays !== undefined) tags += `<!--delivery_max_days:${effectiveMaxDays}-->\n`;
+
     const dbPayload: any = {
       id,
       name: name.trim(),
@@ -194,7 +241,7 @@ export async function POST(request: NextRequest) {
       original_price: originalPrice ? Number(originalPrice) : null,
       category,
       images: Array.isArray(images) ? images : [],
-      description: description.trim(),
+      description: `${tags}${description.trim()}`,
       stock: Number(stock) || 10,
       colors: Array.isArray(colors) ? colors : [],
       sizes: Array.isArray(sizes) ? sizes : [],
@@ -202,6 +249,7 @@ export async function POST(request: NextRequest) {
       frame_model: effectiveFrameModels[0]?.label || undefined,
       estimated_delivery_days: effectiveDeliveryDays,
       delivery_fee: effectiveDeliveryFee,
+      is_ready_stock: effectiveReadyStock,
       is_new: Boolean(isNew),
       is_trending: Boolean(isTrending),
       created_at: new Date().toISOString(),
@@ -220,7 +268,10 @@ export async function POST(request: NextRequest) {
       (error.includes("frame_models") ||
         error.includes("frame_model") ||
         error.includes("estimated_delivery_days") ||
-        error.includes("delivery_fee"))
+        error.includes("delivery_fee") ||
+        error.includes("is_ready_stock") ||
+        error.includes("delivery_min_days") ||
+        error.includes("delivery_max_days"))
     ) {
       console.warn("Columns not yet added in Supabase. Falling back to embedded description tags...");
       const fallbackPayload = { ...dbPayload };
@@ -228,17 +279,21 @@ export async function POST(request: NextRequest) {
       delete fallbackPayload.frame_model;
       delete fallbackPayload.estimated_delivery_days;
       delete fallbackPayload.delivery_fee;
-      let tags = "";
+      delete fallbackPayload.is_ready_stock;
+      delete fallbackPayload.delivery_min_days;
+      delete fallbackPayload.delivery_max_days;
+
+      let extraTags = tags;
       if (effectiveFrameModels && effectiveFrameModels.length > 0) {
-        tags += `<!--frame_models:${JSON.stringify(effectiveFrameModels)}-->\n`;
+        extraTags += `<!--frame_models:${JSON.stringify(effectiveFrameModels)}-->\n`;
       }
       if (effectiveDeliveryDays) {
-        tags += `<!--delivery_days:${effectiveDeliveryDays}-->\n`;
+        extraTags += `<!--delivery_days:${effectiveDeliveryDays}-->\n`;
       }
       if (effectiveDeliveryFee !== undefined) {
-        tags += `<!--delivery_fee:${effectiveDeliveryFee}-->\n`;
+        extraTags += `<!--delivery_fee:${effectiveDeliveryFee}-->\n`;
       }
-      fallbackPayload.description = `${tags}${fallbackPayload.description || ""}`;
+      fallbackPayload.description = `${extraTags}${description.trim()}`;
       const retryRes = await supabaseQuery<any[]>("products", {
         method: "POST",
         body: fallbackPayload,
@@ -279,4 +334,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

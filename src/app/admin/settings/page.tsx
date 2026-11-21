@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Save, Loader, CheckCircle, AlertCircle } from "lucide-react";
+import { Save, Loader, CheckCircle, AlertCircle, Truck } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 export default function AdminSettingsPage() {
@@ -210,6 +211,25 @@ export default function AdminSettingsPage() {
             rows={3}
             className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:border-[var(--accent-1)] focus:outline-none resize-none"
           />
+        </div>
+      </div>
+
+      {/* Delivery & Shipping Settings Section */}
+      <div className="bg-[#070707] border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-serif uppercase tracking-wider text-white">Delivery & Shipping Settings</h2>
+            <p className="text-xs text-zinc-400 mt-1">
+              Dynamic estimated delivery date range (default: 20–25 days), business day calculation rules, and product overrides.
+            </p>
+          </div>
+          <Link
+            href="/admin/delivery"
+            className="inline-flex items-center gap-2 bg-[#c9a227] text-black font-bold uppercase tracking-wider text-xs px-5 py-2.5 rounded-xl hover:brightness-110 shrink-0 shadow-md shadow-[#c9a227]/20 transition-all"
+          >
+            <Truck className="w-4 h-4" />
+            <span>Manage Delivery Settings</span>
+          </Link>
         </div>
       </div>
 

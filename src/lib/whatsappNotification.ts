@@ -94,7 +94,8 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
   let itemsListText = "";
   if (items.length > 0) {
     items.forEach((item, index) => {
-      const itemName = item.name || item.title || "Devotional Tanjore Painting";
+      const readyTag = item.is_ready_stock ? " _[⚡ Ready Stock Available]_" : "";
+      const itemName = `${item.name || item.title || "Devotional Tanjore Painting"}${readyTag}`;
       const qty = item.quantity || 1;
       const unitPrice = Number(item.unitPrice || item.price || 0);
       const itemTotal = Number(item.totalPrice || unitPrice * qty);
@@ -136,6 +137,9 @@ export function formatOrderWhatsAppMessage(order: any, paymentDetails?: any): {
     ``,
     `*DELIVERY ADDRESS:*`,
     `${deliveryAddress}`,
+    ``,
+    `*ESTIMATED DELIVERY:*`,
+    `• *Window:* ${shippingData.estimated_delivery?.text || order.estimated_delivery_text || "20–25 Calendar Days (Pan-India Insured)"}`,
     ``,
     `*ORDERED ITEMS (${items.length || 1}):*`,
     itemsListText.trimEnd(),
